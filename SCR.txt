@@ -1,0 +1,10 @@
+NXP Software Content Register
+ 
+Package: Generic FSK Link Layer Software             
+Version: 4.0.22
+Outgoing License: BSD-3-Clause
+License File: LICENSE
+Format: Source code & header files                
+Description: Software for driving the GENFSK Module                                            
+Release Location: https://github.com/nxp-mcuxpresso/mcux-sdk-middleware-genfsk             
+Origin: NXP 

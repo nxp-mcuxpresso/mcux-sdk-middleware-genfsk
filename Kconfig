@@ -1,0 +1,7 @@
+# Copyright 2024 NXP
+# SPDX-License-Identifier: BSD-3-Clause
+
+menuconfig MCUX_COMPONENT_middleware.wireless.genfsk
+    bool "Generic FSK Link Layer"
+    help
+      Enable the Generic FSK Link Layer
