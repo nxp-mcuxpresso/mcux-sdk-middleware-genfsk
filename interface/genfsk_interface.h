@@ -15,7 +15,8 @@ SPDX-License-Identifier: BSD-3-Clause
 #if defined(KW37Z4_SERIES) || defined(KW37A4_SERIES) || defined(KW38Z4_SERIES) || \
     defined(KW38A4_SERIES) || defined(K32W232H_SERIES)  || defined(KW45B41Z83_SERIES) || \
     defined(K32W1480_SERIES) || defined(MCXW716A_SERIES) || defined(MCXW716C_SERIES) || \
-    defined(KW47B42ZB7_cm33_core0_SERIES) || defined(MCXW727C_cm33_core0_SERIES)
+    defined(KW47B42ZB7_cm33_core0_SERIES) || defined(MCXW727C_cm33_core0_SERIES) || \
+    defined(KW43B43ZC7_SERIES)
 #include "nxp2p4_xcvr.h"
 #else
 #include "fsl_xcvr.h"
@@ -38,10 +39,12 @@ SPDX-License-Identifier: BSD-3-Clause
 #define RADIO_IS_GEN_3P0 1
 #endif
 
-#if defined(K32W232H_SERIES) || defined(KW45B41Z83_SERIES) || defined(K32W1480_SERIES) || defined(MCXW716A_SERIES) || defined(MCXW716C_SERIES) || defined(KW47B42ZB7_cm33_core0_SERIES) || defined(MCXW727C_cm33_core0_SERIES)
+#if defined(K32W232H_SERIES) || defined(KW45B41Z83_SERIES) || defined(K32W1480_SERIES) || \
+    defined(MCXW716A_SERIES) || defined(MCXW716C_SERIES) || defined(KW47B42ZB7_cm33_core0_SERIES) || \
+    defined(MCXW727C_cm33_core0_SERIES) || defined(KW43B43ZC7_SERIES)
 #define RADIO_IS_GEN_3P5
 #define RADIO_IS_GEN_3P0 1
-#endif  
+#endif
 
 #ifdef RADIO_IS_GEN_4P7
 #define RADIO_IS_GEN_4P5
@@ -195,7 +198,7 @@ typedef enum _genfskStatus
 {
     gGenfskSuccess_c = 0U,  /*!< Execution successful. */
     gGenfskInvalidParameters_c = 1U,  /*!< Invalid parameters. */
-    gGenfskFail_c = 2U,  /*!< Execution failure. */    
+    gGenfskFail_c = 2U,  /*!< Execution failure. */
     gGenfskNotInitialized_c = 3U, /*!< The GENFSK module was not initialized. */
     gGenfskAlreadyInit_c = 4U,  /*!< Issued by GENFSK_AllocInstance() if the GENFSK module is already initialized. */
     gGenfskBusyRx_c = 5U,  /*!< Transceiver has an active RX sequence. */
@@ -231,7 +234,7 @@ typedef enum _genfskPacketCfgLengthBitOrd
 
 /*! @brief CRC enable bit definitions. */
 typedef enum _genfskCrcComputeMode
-{    
+{
     gGenfskCrcDisable = 0U,  /*!< CRC functionality disabled. */
     gGenfskCrcEnable = 1U  /*!< CRC functionality enabled. */
 } genfskCrcComputeMode_t;
@@ -265,7 +268,7 @@ typedef enum _genfskCrcCfgCrcByteOrd
 
 /*! @brief Whitener enable bit definitions. */
 typedef enum _genfskWhitenMode
-{   
+{
     gGenfskWhitenDisable = 0U,  /*!< Whitener functionality disabled. */
     gGenfskWhitenEnable = 1U,  /*!< Whitener functionality enabled. */
 } genfskWhitenMode_t;
@@ -300,10 +303,10 @@ typedef enum _genfskWhitenPolyType
     gFibonnaciPolyType = 1U  /*!< A Fibonacci type LFSR is used with the whiten polynomial. */
 } genfskWhitenPolyType_t;
 
-/*! 
- * @brief WHITEN_REF_IN bit definitions. 
+/*!
+ * @brief WHITEN_REF_IN bit definitions.
  *
- * @note The input data stream is reflected bit-wise, per byte. Bit 7 becomes bit 0, bit 6 becomes bit 1, etc. 
+ * @note The input data stream is reflected bit-wise, per byte. Bit 7 becomes bit 0, bit 6 becomes bit 1, etc.
  * Will only cause the reflection of the payload data bits as they are used in the whiten calculation
  * and will not cause any change in the output bit order.
  */
@@ -371,7 +374,7 @@ typedef enum _genfsMode
  *
  * Network address.
  *
- * @note The LS bytes of this type are used when network address length is less than 4 bytes. 
+ * @note The LS bytes of this type are used when network address length is less than 4 bytes.
  */
 typedef uint32_t GENFSK_nwk_addr_t;
 
@@ -392,7 +395,7 @@ typedef struct _GENFSK_nwk_addr_match
  *
  * 64 bits of timestamp.
  *
- * @note The timestamp based on a 1us timer tick. 
+ * @note The timestamp based on a 1us timer tick.
  */
 typedef uint64_t GENFSK_timestamp_t;
 
@@ -427,21 +430,21 @@ typedef struct _GENFSK_mode_config
 /*! @brief GENFSK packet format configure structure. */
 typedef struct _GENFSK_packet_config
 {
-    uint16_t preambleSizeBytes;  /*!< Preamble length in bytes, allowed range is 0..511 representing 1 to 512 bytes long preambles. */    
+    uint16_t preambleSizeBytes;  /*!< Preamble length in bytes, allowed range is 0..511 representing 1 to 512 bytes long preambles. */
     genfskPacketType_t packetType;  /*!< Packet type. See "genfskPacketType_t". */
     uint8_t lengthSizeBits;  /*!< Number of bits in the LENGTH field. */
     genfskPacketCfgLengthBitOrd_t lengthBitOrder;  /*!< Bit order for the LENGTH field of the header. See "genfskPacketCfgLengthBitOrd_t". */
     uint8_t syncAddrSizeBytes;  /*!< Sync (network) address length in bytes, allowed range is 0..3 representing 1 to 4 bytes long sync addresses. */
     int16_t lengthAdjBytes;  /*!< Signed adjustment to the length field for TX and RX. A value of 0 (default) means LENGTH is interpreted as PAYLOAD + CRC. */
     uint8_t h0SizeBits;  /*!< Number of bits in the H0 field. */
-    uint8_t h1SizeBits;  /*!< Number of bits in the H1 field. */    
+    uint8_t h1SizeBits;  /*!< Number of bits in the H1 field. */
     uint16_t h0Match;  /*!< Bits which must match the H0 portion of a received packet for valid packet reception. */
     uint16_t h0Mask;  /*!< Mask to select which bits of H0 must match the h0_match field. */
     uint16_t h1Match;  /*!< Bits which must match the H1 portion of a received packet for valid packet reception. */
     uint16_t h1Mask;  /*!< Mask to select which bits of H1 must match the h1_match field. */
 #if defined (RADIO_IS_GEN_3P5)
     uint8_t  preambleBytePattern; /*if value is not 0, the preamble pattern will be repeated preambleSizeBytes+1*/
-#endif    
+#endif
 } GENFSK_packet_config_t;
 
 /*! @brief GENFSK CRC module configure structure. */
@@ -462,7 +465,7 @@ typedef struct _GENFSK_crc_config
 /*!
  * @brief GENFSK Whitener module configure structure.
  *
- * @note Whitening and Manchester encoding are mutually exclusive. 
+ * @note Whitening and Manchester encoding are mutually exclusive.
  */
 typedef struct _GENFSK_whitener_config
 {
@@ -515,21 +518,21 @@ typedef struct _GENFSK_packet_t
  * @param pBuffer The pointer to the buffer used for reception.
  * @param packet_length The allocated pkt_buffer size for the maximum packet length that can be received.
  * @param timestamp The timestamp for the received packet in microseconds.
- * @param rssi The RSSI for the received packet. 
- * @param crcValid If set, the CRC for the received packet is valid. Else CRC is invalid. 
+ * @param rssi The RSSI for the received packet.
+ * @param crcValid If set, the CRC for the received packet is valid. Else CRC is invalid.
  */
 typedef void ( *genfskPacketReceivedCallBack_t ) (uint8_t *pBuffer, uint16_t bufferLength, uint64_t timestamp, int8_t rssi, uint8_t crcValid);
 
 /*!
  * @brief Event notification callback function pointer type.
  *
- * @param event Reason the callback is being invoked. See "genfskEvent_t". 
+ * @param event Reason the callback is being invoked. See "genfskEvent_t".
  * @param eventStatus The status of the event. See "genfskEventStatus_t".
  */
 typedef void ( *genfskEventNotifyCallBack_t ) (genfskEvent_t event, genfskEventStatus_t eventStatus);
 
 /*! @brief GTM packet payload type definition. */
-typedef enum 
+typedef enum
 {
     genfskGtmPrbs9Payload = 0U,         /*!<  PRBS9 pattern, same as BTLE. */
     genfskGtm8BitPatternPayload = 1U,   /*!<  8 bit pattern from GTM_PDU[7:0]. */
@@ -568,7 +571,7 @@ typedef struct
     uint16_t packet_count;                  /*!<  When RX, count the number of IPD slots after first AA, When TX, count the number of packets sent. */
     uint16_t good_packet_count;             /*!<  GTM Bad Packet Counter (CRC fail) */
     uint16_t bad_packet_count;              /*!<  GTM Good Packet Counter (CRC pass) */
-    bool_t   is_activity_enabled;           /*!<  TRUE, if GTM RX or TX activity not yet completed. This is the value of GTM_IN_RX bit or 
+    bool_t   is_activity_enabled;           /*!<  TRUE, if GTM RX or TX activity not yet completed. This is the value of GTM_IN_RX bit or
                                                   GTM_IN_TX bit from GTM_CTRL register. */
 } GENFSK_gtm_packet_count_t;
 
@@ -579,7 +582,7 @@ typedef struct
 #if defined(__cplusplus)
 extern "C" {
 #endif
-    
+
 /*!
  * @name GENFSK functional Operation
  * @{
@@ -588,8 +591,8 @@ extern "C" {
 /*!
  * @brief Initializes the GENFSK LL.
  *
- * This function initializes the GENFSK LL. 
- *    
+ * This function initializes the GENFSK LL.
+ *
  * @retval gGenfskSuccess_c if success or the failure reason.
  */
 genfskStatus_t GENFSK_Init(void);
@@ -598,8 +601,8 @@ genfskStatus_t GENFSK_Init(void);
  * @brief Allocates a GENFSK LL instance.
  *
  * This function allocates the GENFSK LL module and initilizes the instance according to the protocol and processing chain settings.
- * 
- * 
+ *
+ *
  * @param pInstanceId The pointer which will save the allocated instance. gGENFSK_InvalidIdx_c if the allocation failed.
  * @param radioConfig The radio configuration for which the GENFSK LL should be configured.
  * @param packetConfig The packet configuration for which the GENFSK LL should be configured.
@@ -678,7 +681,7 @@ genfskStatus_t GENFSK_GetModeConfig(uint8_t instanceId, GENFSK_mode_config_t *mo
  *
  * @param instanceId The ID of the instance.
  * @param crcConfig The CRC configuration to be set in GENFSK LL.
- * 
+ *
  * @retval gGenfskSuccess_c if success or the failure reason.
  */
 genfskStatus_t GENFSK_SetCrcConfig(uint8_t instanceId, const GENFSK_crc_config_t *crcConfig);
@@ -750,7 +753,7 @@ void GENFSK_ResetToDefaults(uint8_t instanceId);
  * @param nwkAddressSettings the settings to be applied.
  *
  * @retval gGenfskSuccess_c if success or the failure reason.
- */ 
+ */
 genfskStatus_t GENFSK_SetNetworkAddress(uint8_t instanceId, uint8_t location, const GENFSK_nwk_addr_match_t *nwkAddressSettings);
 
 /*!
@@ -762,7 +765,7 @@ genfskStatus_t GENFSK_SetNetworkAddress(uint8_t instanceId, uint8_t location, co
  * @param mask The event mask specifies which notification events are sent by genfskEventNotifyCallBack_t. See "genfskEvent_t".
  *
  * @retval gGenfskSuccess_c if success or the failure reason.
- */ 
+ */
 genfskStatus_t GENFSK_SetEventMask(uint8_t instanceId, uint32_t eventMask);
 
 /*!
@@ -772,7 +775,7 @@ genfskStatus_t GENFSK_SetEventMask(uint8_t instanceId, uint32_t eventMask);
  * Returns the current enabled events for genfskEventNotifyCallBack_t.
  *
  * @retval genfskEvent_t.
- */ 
+ */
 uint32_t GENFSK_GetEventMask(uint8_t instanceId);
 
 /*!
@@ -785,7 +788,7 @@ uint32_t GENFSK_GetEventMask(uint8_t instanceId);
  * @param nwkAddressSettings the stored network address settings at the specified location.
  *
  * @retval gGenfskSuccess_c if success or the failure reason.
- */ 
+ */
 genfskStatus_t GENFSK_GetNetworkAddress(uint8_t instanceId, uint8_t location, GENFSK_nwk_addr_match_t *nwkAddressSettings);
 
 /*!
@@ -797,7 +800,7 @@ genfskStatus_t GENFSK_GetNetworkAddress(uint8_t instanceId, uint8_t location, GE
  * @param location the location number to disable, valid range is 0..3. This location will be enabled if there are no errors during the setting process.
  *
  * @retval gGenfskSuccess_c if success or the failure reason.
- */ 
+ */
 genfskStatus_t GENFSK_EnableNetworkAddress(uint8_t instanceId, uint8_t location);
 
 /*!
@@ -809,7 +812,7 @@ genfskStatus_t GENFSK_EnableNetworkAddress(uint8_t instanceId, uint8_t location)
  * @param location the location number to disable, valid range is 0..3. This location will be disabled if there are no errors during the setting process.
  *
  * @retval gGenfskSuccess_c if success or the failure reason.
- */ 
+ */
 genfskStatus_t GENFSK_DisableNetworkAddress(uint8_t instanceId, uint8_t location);
 
 /*!
@@ -967,7 +970,7 @@ void GENFSK_AbortAll(void);
  */
 GENFSK_timestamp_t GENFSK_GetTimestamp(void);
 
-/*! 
+/*!
  * @brief Schedules an event.
  *
  * @param pEvent event to be scheduled.
@@ -976,7 +979,7 @@ GENFSK_timestamp_t GENFSK_GetTimestamp(void);
  */
 genfskTimerId_t GENFSK_TimeScheduleEvent(GENFSK_TimeEvent_t *pEvent);
 
-/*! 
+/*!
  * @brief Cancels an event.
  *
  * @param pTimerId pointer to the ID of the timer. Will be reset to gGENFSK_InvalidTimerId_c.
@@ -988,7 +991,7 @@ void GENFSK_TimeCancelEvent(genfskTimerId_t *pTimerId);
  *
  * This function is used before GENFSK_StartTx() in order to convert the formatted packet in a byte array to be sent over the air.
  * The byte array will have the format :
- *      NWK_ADDRESS | H0 | LENGTH | H1 | PAYLOAD | CRC 
+ *      NWK_ADDRESS | H0 | LENGTH | H1 | PAYLOAD | CRC
  * This API operates in two modes: "copy" mode and "no copy" mode.
  * - "copy" mode is assumed when pPacket->payload is specified: packet header and payload are copied into pBuffer
  * - "no copy" is assumed when pPacket->payload is NULL. Only packet header is formed into pBuffer, payload has to be copied by the caller.
@@ -1028,7 +1031,7 @@ genfskStatus_t GENFSK_ByteArrayToPacket(uint8_t instanceId, const uint8_t *pBuff
 genfskStatus_t GENFSK_RegisterCallbacks(uint8_t instanceId, genfskPacketReceivedCallBack_t packetReceivedCallback, genfskEventNotifyCallBack_t eventCallback);
 
 /*!
- * @brief Configures the whitening init register with proper value for BLE. 
+ * @brief Configures the whitening init register with proper value for BLE.
  *
  * This function configures the whitening init register with proper value for BLE. When GENFSK_SetChannelNumber() is called
  * for BLE application, this function shall be called too if whitening init is not properly handled by the function itself.
@@ -1042,9 +1045,9 @@ genfskStatus_t GENFSK_RegisterCallbacks(uint8_t instanceId, genfskPacketReceived
 genfskStatus_t GENFSK_SetBleWhitenInit(uint8_t instanceId, uint8_t channelNum);
 
 
-/*! 
+/*!
  * @brief Returns the xtal trim value (from flash if valid or the default value).
- * 
+ *
  * This function returns the xtal trim value (from flash if valid or the default value).
  *
  * @param none.
@@ -1073,7 +1076,7 @@ genfskStatus_t GENFSK_RadioConfigWithRbme(uint8_t instanceId, const GENFSK_radio
  *
  * The function enables the promiscuous mode.
  *
- * @note In promiscuous mode various events with failure reasons will be passed. See "genfskEventStatus_t". 
+ * @note In promiscuous mode various events with failure reasons will be passed. See "genfskEventStatus_t".
  */
 void GENFSK_PromiscuousModeEnable(void);
 
@@ -1087,11 +1090,11 @@ void GENFSK_PromiscuousModeDisable(void);
 /*!
  * @brief Starts the RX in GTM mode.
  *
- * This function configures and starts the RX in GTM mode. It configures among 
+ * This function configures and starts the RX in GTM mode. It configures among
  * other the packet count, the pdu length and the inter packet transmision time.
  *
  * @param instanceId     The ID of the instance.
- *        rx_gtm_config  The RX GTM configuration    
+ *        rx_gtm_config  The RX GTM configuration
  *
  * @retval gGenfskSuccess_c if success or the failure reason.
  */
@@ -1099,7 +1102,7 @@ genfskStatus_t GENFSK_GtmStartRx(uint8_t instanceId, const GENFSK_gtm_rx_config_
 /*!
  * @brief Stops the RX in GTM mode.
  *
- * This function stops the RX in GTM mode.    
+ * This function stops the RX in GTM mode.
  *
  * @retval gGenfskSuccess_c if success or the failure reason.
  */
@@ -1107,11 +1110,11 @@ genfskStatus_t GENFSK_GtmStopRx(void);
 /*!
  * @brief Starts the TX in GTM mode.
  *
- * This function configures and starts the TX in GTM mode. It configures among 
- * other the packet count, the pdu length, the pdu type and the inter packet transmision time.  
+ * This function configures and starts the TX in GTM mode. It configures among
+ * other the packet count, the pdu length, the pdu type and the inter packet transmision time.
  *
  * @param instanceId     The ID of the instance.
- *        tx_gtm_config  The TX GTM configuration  
+ *        tx_gtm_config  The TX GTM configuration
  *
  * @retval gGenfskSuccess_c if success or the failure reason.
  */
@@ -1119,7 +1122,7 @@ genfskStatus_t GENFSK_GtmStartTx(uint8_t instanceId, const GENFSK_gtm_tx_config_
 /*!
  * @brief Stops the TX in GTM mode.
  *
- * This function stops the TX in GTM mode.    
+ * This function stops the TX in GTM mode.
  *
  * @retval gGenfskSuccess_c if success or the failure reason.
  */

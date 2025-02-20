@@ -24,11 +24,13 @@ SPDX-License-Identifier: BSD-3-Clause
 #include "nxp_xcvr_coding_config.h"
 #endif
 
+#if !defined(FPGA_TARGET) || (FPGA_TARGET == 0)
 #if (defined(SDK_COMPONENT_INTEGRATION) && (SDK_COMPONENT_INTEGRATION > 0))
 #include "fsl_adapter_flash.h"
 #else  /*SDK_COMPONENT_INTEGRATION > 0*/
 #include "Flash_Adapter.h"
 #endif /*SDK_COMPONENT_INTEGRATION > 0*/
+#endif
 
 #include "board.h"
 
@@ -547,8 +549,9 @@ uint32_t GENFSK_GetTxDuration(uint8_t instanceId, uint16_t nBytes)
 use in code directly PLATFORM_GetXtal32MhzTrim() instead of below wrapper function. */
 uint32_t GENFSK_GetSavedXtalTrim(void)
 {
-    uint32_t savedXtalTrim;
+    uint32_t savedXtalTrim = 0U;
 
+#if !defined(FPGA_TARGET) || (FPGA_TARGET == 0)
 #if defined(RADIO_IS_GEN_4P5) || defined(RADIO_IS_GEN_4P0)
     savedXtalTrim = (uint32_t)PLATFORM_GetXtal32MhzTrim(FALSE);
 #elif defined (RADIO_IS_GEN_3P5)
@@ -556,6 +559,7 @@ uint32_t GENFSK_GetSavedXtalTrim(void)
 #else
 #error no longer supported
 #endif /* defined (RADIO_IS_GEN_3P5) */
+#endif
 
     return savedXtalTrim;
 }
@@ -739,8 +743,8 @@ void GENFSK_RestoreXcvrSetting(void)
     uint32_t temp_trim;
     temp_trim = XCVR_ANALOG->LDO_1;
     temp_trim &= ~(XCVR_ANALOG_LDO_1_LDO_ANT_TRIM_MASK);
-    temp_trim |= XCVR_ANALOG_LDO_1_LDO_ANT_TRIM(tx_power_ldo_trim); 
-    XCVR_ANALOG->LDO_1 = temp_trim; 
+    temp_trim |= XCVR_ANALOG_LDO_1_LDO_ANT_TRIM(tx_power_ldo_trim);
+    XCVR_ANALOG->LDO_1 = temp_trim;
 #else
     // MISRA: avoi empty function
     return;
