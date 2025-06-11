@@ -1,0 +1,35 @@
+{
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "spdxVersion": "SPDX-2.3",
+  "creationInfo": {
+    "created": "2025-05-21T07:42:56Z",
+    "creators": [
+      "Organization: NXP"
+    ],
+    "licenseListVersion": "3.20"
+  },
+  "name": "mcux-sdk-middleware-genfsk-v25.06.00",
+  "dataLicense": "CC0-1.0",
+  "documentNamespace": "https://nxp.com/spdx/703d4a63-7e47-4eee-a34e-0c53945fd4d0",
+  "packages": [
+    {
+      "SPDXID": "SPDXRef-package-703d4a63-7e47-4eee-a34e-0c53945fd4d0",
+      "name": "mcux-sdk-middleware-genfsk",
+      "versionInfo": "v25.06.00",
+      "licenseConcluded": "(BSD-3-Clause)",
+      "licenseDeclared": "(BSD-3-Clause)",
+      "downloadLocation": "https://github.com/nxp-mcuxpresso/mcux-sdk-middleware-genfsk",
+      "originator": "Organization: NXP",
+      "supplier": "NOASSERTION",
+      "externalRefs": [],
+      "filesAnalyzed": false
+    }
+  ],
+  "relationships": [
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relationshipType": "DESCRIBES",
+      "relatedSpdxElement": "SPDXRef-package-703d4a63-7e47-4eee-a34e-0c53945fd4d0"
+    }
+  ]
+}
