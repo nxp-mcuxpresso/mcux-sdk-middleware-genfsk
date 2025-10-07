@@ -127,8 +127,10 @@ typedef struct _GENFSK_RegsStruct
     uint32_t ntwAdrCtrl;
     uint32_t ntwAdr0;
     uint32_t ntwAdr1;
+#if defined(NXP_RADIO_GEN) && (NXP_RADIO_GEN <= 470)
     uint32_t ntwAdr2;
     uint32_t ntwAdr3;
+#endif
     uint32_t packetCfg;
     uint32_t h0Cfg;
     uint32_t h1Cfg;

@@ -408,8 +408,10 @@ static void GENFSK_SwitchToInstance(uint8_t instanceId)
     GENFSK->NTW_ADR_CTRL = genfskLocal[instanceId].genfskRegs.ntwAdrCtrl;
     GENFSK->NTW_ADR_0 = genfskLocal[instanceId].genfskRegs.ntwAdr0;
     GENFSK->NTW_ADR_1 = genfskLocal[instanceId].genfskRegs.ntwAdr1;
+#if defined(NXP_RADIO_GEN) && (NXP_RADIO_GEN <= 470)
     GENFSK->NTW_ADR_2 = genfskLocal[instanceId].genfskRegs.ntwAdr2;
     GENFSK->NTW_ADR_3 = genfskLocal[instanceId].genfskRegs.ntwAdr3;
+#endif
     GENFSK->PACKET_CFG = genfskLocal[instanceId].genfskRegs.packetCfg;
     GENFSK->H0_CFG = genfskLocal[instanceId].genfskRegs.h0Cfg;
     GENFSK->H1_CFG = genfskLocal[instanceId].genfskRegs.h1Cfg;
@@ -1775,7 +1777,11 @@ genfskStatus_t GENFSK_SetNetworkAddress(uint8_t instanceId, uint8_t location, co
     {
         status = gGenfskInvalidParameters_c;
     }
+#if defined(NXP_RADIO_GEN) && (NXP_RADIO_GEN <= 470)
     else if ((location > 3U) || (nwkAddressSettings == NULL))
+#else
+    else if ((location > 1U) || (nwkAddressSettings == NULL))
+#endif
     {
         status = gGenfskInvalidParameters_c;
     }
@@ -1818,6 +1824,7 @@ genfskStatus_t GENFSK_SetNetworkAddress(uint8_t instanceId, uint8_t location, co
         {
             genfskLocal[instanceId].genfskRegs.ntwAdr1 = tempNwkAddress;
         }
+#if defined(NXP_RADIO_GEN) && (NXP_RADIO_GEN <= 470)
         else if (location == 2U)
         {
             genfskLocal[instanceId].genfskRegs.ntwAdr2 = tempNwkAddress;
@@ -1826,6 +1833,13 @@ genfskStatus_t GENFSK_SetNetworkAddress(uint8_t instanceId, uint8_t location, co
         {
             genfskLocal[instanceId].genfskRegs.ntwAdr3 = tempNwkAddress;
         }
+#else
+        else
+        {
+            // MISRA required
+        }
+#endif
+
 #else
         if (location == 0U)
         {
@@ -1874,8 +1888,10 @@ genfskStatus_t GENFSK_SetNetworkAddress(uint8_t instanceId, uint8_t location, co
             GENFSK->NTW_ADR_CTRL = genfskLocal[instanceId].genfskRegs.ntwAdrCtrl;
             GENFSK->NTW_ADR_0 = genfskLocal[instanceId].genfskRegs.ntwAdr0;
             GENFSK->NTW_ADR_1 = genfskLocal[instanceId].genfskRegs.ntwAdr1;
+#if defined(NXP_RADIO_GEN) && (NXP_RADIO_GEN <= 470)
             GENFSK->NTW_ADR_2 = genfskLocal[instanceId].genfskRegs.ntwAdr2;
             GENFSK->NTW_ADR_3 = genfskLocal[instanceId].genfskRegs.ntwAdr3;
+#endif
         }
     }
 
@@ -1918,6 +1934,7 @@ genfskStatus_t GENFSK_GetNetworkAddress(uint8_t instanceId, uint8_t location, GE
         {
             nwkAddressSettings->nwkAddr = genfskLocal[instanceId].genfskRegs.ntwAdr1;
         }
+#if defined(NXP_RADIO_GEN) && (NXP_RADIO_GEN <= 470)
         else if (location == 2U)
         {
             nwkAddressSettings->nwkAddr = genfskLocal[instanceId].genfskRegs.ntwAdr2;
@@ -1926,6 +1943,12 @@ genfskStatus_t GENFSK_GetNetworkAddress(uint8_t instanceId, uint8_t location, GE
         {
             nwkAddressSettings->nwkAddr = genfskLocal[instanceId].genfskRegs.ntwAdr3;
         }
+#else
+        else 
+        {
+            // MISRA required
+        }
+#endif
 #else
         if (location == 0U)
         {

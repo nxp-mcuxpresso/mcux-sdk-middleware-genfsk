@@ -117,12 +117,14 @@ void GENFSK_ReadPacketBuffer(uint16_t addr_offset, uint8_t *buffer, uint16_t len
 
       switch (nwAddMatched)
       {
+#if defined(NXP_RADIO_GEN) && (NXP_RADIO_GEN <= 470)
         case 0x8U:
           addrTemp = genfskLocal[mGenfskActiveInstance].genfskRegs.ntwAdr3;
           break;
         case 0x4U:
           addrTemp = genfskLocal[mGenfskActiveInstance].genfskRegs.ntwAdr2;
           break;
+#endif
         case 0x2U:
           addrTemp = genfskLocal[mGenfskActiveInstance].genfskRegs.ntwAdr1;
           break;
