@@ -2127,11 +2127,22 @@ genfskStatus_t GENFSK_SetTxPowerLevel(uint8_t instanceId, uint8_t txPowerLevel)
     {
         status = gGenfskInvalidParameters_c;
     }
+#if defined(NXP_RADIO_GEN) && (NXP_RADIO_GEN>=470)
+    else if (txPowerLevel > 27U)
+#else
     else if (txPowerLevel > 32U)
+#endif
     {
         status = gGenfskInvalidParameters_c;
     }
     else
+#endif
+#if defined(NXP_RADIO_GEN) && (NXP_RADIO_GEN >= 470)
+    /* cap the tx power level to 27 for KW47/MCXW72 and followings */
+    if( txPowerLevel > 27U )
+    {
+        txPowerLevel = 27U;
+    }
 #endif
     if (genfskLocal[instanceId].genfskState != gGENFSK_LL_Idle)
     {

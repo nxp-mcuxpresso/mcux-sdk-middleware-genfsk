@@ -844,7 +844,8 @@ uint8_t GENFSK_GetChannelNumber(uint8_t instanceId);
  * This function sets power level for transmission.
  *
  * @param instanceId The ID of the instance.
- * @param txPowerLevel The power level for transmission, 0 <= txPowerLevel <= 32.
+ * @param txPowerLevel The power level for transmission, 0 <= txPowerLevel <= max power level.
+ *                     The max power level is 32 for KW45/MCXW71, 27 for KW47/MCXW72 and followings.
  *
  * @retval gGenfskSuccess_c if success or the failure reason.
  */
