@@ -65,10 +65,6 @@ GENFSK_STATIC   uint8_t  bbLdoHfTrimTx = 0;
 static          uint8_t  isHighPowerConfigured = 0x0;
 #endif /* RADIO_IS_GEN_3P5 */
 
-#if defined(RADIO_IS_GEN_4P5)
-/* used to backup LDO TRIM before XCVR reconfiguration */
-GENFSK_STATIC   uint8_t  tx_power_ldo_trim;
-#endif
 /*!
  * \brief The version string of Generic FSK
  */
@@ -727,28 +723,3 @@ uint8_t GENFSK_IsHighPowerConfigured(void)
     return isHighPowerConfigured;
 }
 #endif
-
-void GENFSK_BackupXcvrSetting(void)
-{
-#if defined(RADIO_IS_GEN_4P5)
-    tx_power_ldo_trim = (uint8_t)((XCVR_ANALOG->LDO_1 & XCVR_ANALOG_LDO_1_LDO_ANT_TRIM_MASK) >> XCVR_ANALOG_LDO_1_LDO_ANT_TRIM_SHIFT);
-#else
-    // MISRA: avoi empty function
-    return;
-#endif // defined(RADIO_IS_GEN_4P5)
-}
-
-void GENFSK_RestoreXcvrSetting(void)
-{
-#if defined(RADIO_IS_GEN_4P5)
-    // reconfigure the LDO TRIM as it is modified after each XCVR mode change
-    uint32_t temp_trim;
-    temp_trim = XCVR_ANALOG->LDO_1;
-    temp_trim &= ~(XCVR_ANALOG_LDO_1_LDO_ANT_TRIM_MASK);
-    temp_trim |= XCVR_ANALOG_LDO_1_LDO_ANT_TRIM(tx_power_ldo_trim);
-    XCVR_ANALOG->LDO_1 = temp_trim;
-#else
-    // MISRA: avoi empty function
-    return;
-#endif // defined(RADIO_IS_GEN_4P5)
-}

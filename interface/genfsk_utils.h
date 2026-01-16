@@ -178,11 +178,6 @@ genfskStatus_t GENFSK_ConfigurePower(uint8_t isHighPwrReq);
 uint8_t GENFSK_IsHighPowerConfigured(void);
 #endif
 
-/*! @brief Backup the XCVR setting before XCVR mode change. */
-void GENFSK_BackupXcvrSetting(void);
-/*! @brief Restore the XCVR setting after XCVR mode change. */
-void GENFSK_RestoreXcvrSetting(void);
-
 #if defined(__cplusplus)
 }
 #endif

@@ -287,9 +287,7 @@ static void GENFSK_ChangeMode(uint8_t instanceId, const GENFSK_radio_config_t *r
         is_high_power_configured = true;
         (void)GENFSK_ConfigurePower(0x0U);
     }
-    GENFSK_BackupXcvrSetting();
     (void)XCVR_ChangeMode(&xcvrConfig, &rbmeConfig);
-    GENFSK_RestoreXcvrSetting();
 #if defined(gBoard_ExtPaSupport_d) && (gBoard_ExtPaSupport_d > 0)
     (void) BOARD_ExtPaXcvrInit(FALSE);
 #endif
@@ -434,14 +432,10 @@ static void GENFSK_SwitchToInstance(uint8_t instanceId)
 
 #if !defined (RADIO_IS_GEN_3P5) && !defined(RADIO_IS_GEN_4P0) && !defined(RADIO_IS_GEN_4P5)
         (void)GENFSK_GetXcvrConfig(genfskLocal[instanceId].radioConfig.radioMode, &radioMode);
-        GENFSK_BackupXcvrSetting();
         (void)XCVR_ChangeMode(radioMode, (data_rate_t)genfskLocal[instanceId].radioConfig.dataRate);
-        GENFSK_RestoreXcvrSetting();
 #else
         (void)GENFSK_GetXcvrConfig(genfskLocal[instanceId].radioConfig.radioMode, genfskLocal[instanceId].radioConfig.dataRate, &xcvrConfig);
-        GENFSK_BackupXcvrSetting();
         GENFSK_ChangeMode(instanceId, &genfskLocal[instanceId].radioConfig, xcvrConfig, rbmeConfig);
-        GENFSK_RestoreXcvrSetting();
 #endif
 
     if (
@@ -818,9 +812,20 @@ genfskStatus_t GENFSK_RadioConfigWithRbme(uint8_t instanceId, const GENFSK_radio
                         xcvr_status = XCVR_SetDcocDacTrims(&mXcvrDacTrim);
                     }
 #else
-                    GENFSK_BackupXcvrSetting();
+#if defined(RADIO_IS_GEN_4P5)
+                    /* backup the LDO output voltage trim control as it is configured by the app to set the maximum tx power */
+                    uint32_t ldo_1_ant_trim;
+                    ldo_1_ant_trim = (uint8_t)((XCVR_ANALOG->LDO_1 & XCVR_ANALOG_LDO_1_LDO_ANT_TRIM_MASK) >> XCVR_ANALOG_LDO_1_LDO_ANT_TRIM_SHIFT);
+#endif
                     xcvr_status = XCVR_Init(&xcvrConfig, &rbmeConfig);
-                    GENFSK_RestoreXcvrSetting();
+#if defined(RADIO_IS_GEN_4P5)
+                    /* restore the LDO output voltage trim control as it is modified during the call to XCVR_Init */
+                    uint32_t temp_trim;
+                    temp_trim = XCVR_ANALOG->LDO_1;
+                    temp_trim &= ~(XCVR_ANALOG_LDO_1_LDO_ANT_TRIM_MASK);
+                    temp_trim |= XCVR_ANALOG_LDO_1_LDO_ANT_TRIM(ldo_1_ant_trim);
+                    XCVR_ANALOG->LDO_1 = temp_trim;
+#endif
 #endif /* gGenfskPreserveXcvrDacTrimValue_d */
                     /* LCOV_EXCL_START */
                     if ( xcvr_status != gXcvrSuccess_c )
@@ -859,9 +864,7 @@ genfskStatus_t GENFSK_RadioConfigWithRbme(uint8_t instanceId, const GENFSK_radio
                 }
                 else
                 {
-                    GENFSK_BackupXcvrSetting();
                     GENFSK_ChangeMode(instanceId, radioConfig, xcvrConfig, rbmeConfig);
-                    GENFSK_RestoreXcvrSetting();
                 }
 
                 if (
@@ -923,15 +926,12 @@ genfskStatus_t GENFSK_RadioConfig(uint8_t instanceId, const GENFSK_radio_config_
                 /* This is the first initialization */
                 if (mNumberOfAllocatedInstances == 0U)
                 {
-                    GENFSK_BackupXcvrSetting();
                     if ( gXcvrSuccess_c != XCVR_Init(radioMode, (data_rate_t)dataRate))
                     {
-                        GENFSK_RestoreXcvrSetting();
                         status = gGenfskFail_c;
                     }
                     else
                     {
-                        GENFSK_RestoreXcvrSetting();
                         (void)GENFSK_SetXtalTrim(GENFSK_GetSavedXtalTrim());
 
                         /* Enable the CRC as it is disabled by default after reset */
@@ -951,9 +951,7 @@ genfskStatus_t GENFSK_RadioConfig(uint8_t instanceId, const GENFSK_radio_config_
                 }
                 else
                 {
-                    GENFSK_BackupXcvrSetting();
                     (void)XCVR_ChangeMode(radioMode, (data_rate_t)dataRate);
-                    GENFSK_RestoreXcvrSetting();
 #if defined(gBoard_ExtPaSupport_d) && (gBoard_ExtPaSupport_d > 0)
                     (void) BOARD_ExtPaXcvrInit(FALSE);
 #endif
@@ -3748,10 +3746,8 @@ static uint32_t MWS_GENFSK_Callback(mwsEvents_t event)
         break;
     case gMWS_Active_c:
 #if !defined (RADIO_IS_GEN_3P5) && !defined(RADIO_IS_GEN_4P0)
-        GENFSK_BackupXcvrSetting();
         GENFSK_GetXcvrConfig(genfskLocal[mGenfskActiveInstance].radioConfig.radioMode, &radioMode);
         (void)XCVR_ChangeMode(radioMode, (data_rate_t)genfskLocal[mGenfskActiveInstance].radioConfig.dataRate);
-        GENFSK_RestoreXcvrSetting();
         /*XCVR_MISC->BLE_ARB_CTRL |= XCVR_CTRL_BLE_ARB_CTRL_BLE_RELINQUISH_MASK;*/
 #else
         RADIO_CTRL->LL_CTRL = 0x00000000U;
