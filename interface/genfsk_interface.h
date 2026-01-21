@@ -13,10 +13,8 @@ SPDX-License-Identifier: BSD-3-Clause
 #include "EmbeddedTypes.h"
 #include "fsl_device_registers.h"
 #if defined(KW37Z4_SERIES) || defined(KW37A4_SERIES) || defined(KW38Z4_SERIES) || \
-    defined(KW38A4_SERIES) || defined(K32W232H_SERIES)  || defined(KW45B41Z83_SERIES) || \
-    defined(K32W1480_SERIES) || defined(MCXW716A_SERIES) || defined(MCXW716C_SERIES) || \
-    defined(KW47B42ZB7_cm33_core0_SERIES) || defined(MCXW727C_cm33_core0_SERIES) || \
-    defined(KW43B43ZC7_SERIES)
+    defined(KW38A4_SERIES) || defined(K32W232H_SERIES) || defined(K32W1480_SERIES) || \
+    (defined(NXP_RADIO_GEN) && (NXP_RADIO_GEN >= 450))
 #include "nxp2p4_xcvr.h"
 #else
 #include "fsl_xcvr.h"
@@ -39,9 +37,7 @@ SPDX-License-Identifier: BSD-3-Clause
 #define RADIO_IS_GEN_3P0 1
 #endif
 
-#if defined(K32W232H_SERIES) || defined(KW45B41Z83_SERIES) || defined(K32W1480_SERIES) || \
-    defined(MCXW716A_SERIES) || defined(MCXW716C_SERIES) || defined(KW47B42ZB7_cm33_core0_SERIES) || \
-    defined(MCXW727C_cm33_core0_SERIES) || defined(KW43B43ZC7_SERIES)
+#if defined(K32W232H_SERIES) || defined(K32W1480_SERIES) || (defined(NXP_RADIO_GEN) && (NXP_RADIO_GEN >= 450))
 #define RADIO_IS_GEN_3P5
 #define RADIO_IS_GEN_3P0 1
 #endif
@@ -80,7 +76,11 @@ SPDX-License-Identifier: BSD-3-Clause
 
 /*! @brief GENFSK Protocol Engine interrupt. */
 #ifndef gGENFSK_IrqNo_d
-#if (defined(CPU_MKW21Z256VHT4) || defined(CPU_MKW21Z512VHT4) || defined(CPU_MKW31Z256CAx4) || \
+#if (defined(CPU_K32W042S1M2VPJ_cm0plus))
+#define gGENFSK_IrqNo_d        (RF0_1_IRQn)
+#elif defined(K32W232H_SERIES) || defined(K32W1480_SERIES) || (defined(NXP_RADIO_GEN) && (NXP_RADIO_GEN >= 450))
+#define gGENFSK_IrqNo_d (RF_Generic_IRQn)
+#elif (defined(CPU_MKW21Z256VHT4) || defined(CPU_MKW21Z512VHT4) || defined(CPU_MKW31Z256CAx4) || \
      defined(CPU_MKW31Z256VHT4) || defined(CPU_MKW31Z512CAx4) || defined(CPU_MKW31Z512VHT4) || \
      defined(CPU_MKW41Z256VHT4) || defined(CPU_MKW41Z512VHT4) || \
      defined(CPU_MKW35A512VFP4) || defined(CPU_MKW35Z512VHT4) || defined(CPU_MKW36A512VFP4) || \
@@ -88,12 +88,6 @@ SPDX-License-Identifier: BSD-3-Clause
      defined(KW37Z4_SERIES)     || defined(KW37A4_SERIES)     || \
      defined(KW38Z4_SERIES)     || defined(KW38A4_SERIES))
 #define gGENFSK_IrqNo_d        (Radio_1_IRQn)
-#elif (defined(CPU_K32W042S1M2VPJ_cm0plus))
-#define gGENFSK_IrqNo_d        (RF0_1_IRQn)
-#elif (defined(K32W232H_SERIES) || defined(KW45B41Z83_SERIES) || defined(K32W1480_SERIES) || \
-      defined(MCXW716A_SERIES) || defined(MCXW716C_SERIES) || defined(KW47B42ZB7_cm33_core0_SERIES) ||\
-      defined(MCXW727C_cm33_core0_SERIES) || defined(KW43B43ZC7_SERIES))
-#define gGENFSK_IrqNo_d (RF_Generic_IRQn)
 #endif
 #endif
 

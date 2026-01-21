@@ -423,9 +423,7 @@ void GENFSK_InstallInterrupt(void)
         XCVR_MISC->XCVR_CTRL &= (uint32_t)~(uint32_t)(XCVR_CTRL_XCVR_CTRL_RADIO0_IRQ_SEL_MASK);
         XCVR_MISC->XCVR_CTRL |= (uint32_t)(XCVR_CTRL_XCVR_CTRL_RADIO0_IRQ_SEL(GENFSK_LL));
     }
-#elif (defined(K32W232H_SERIES) || defined(KW45B41Z83_SERIES) || defined(K32W1480_SERIES) || \
-       defined(MCXW716A_SERIES) || defined(MCXW716C_SERIES) || defined(KW47B42ZB7_cm33_core0_SERIES) ||\
-       defined(MCXW727C_cm33_core0_SERIES)) || defined(KW43B43ZC7_SERIES)
+#elif (defined(K32W232H_SERIES) || defined(K32W1480_SERIES) || (defined(NXP_RADIO_GEN) && (NXP_RADIO_GEN >= 450)))
     {
         /* TBD */
 #if 0
