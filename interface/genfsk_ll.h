@@ -11,7 +11,7 @@ SPDX-License-Identifier: BSD-3-Clause
 #include "EmbeddedTypes.h"
 #include "fsl_os_abstraction.h"
 
-#if defined (RADIO_IS_GEN_3P5)
+#if (NXP_RADIO_GEN >= 350)
 #ifndef XCVR_MISC
 #define XCVR_MISC XCVR__MISC
 #endif
@@ -86,7 +86,7 @@ typedef enum _GENFSK_LL_state
     gGENFSK_LL_BusyTx = 3U,
     gGENFSK_LL_BusyPendingRx = 4U,
     gGENFSK_LL_BusyPendingTx = 5U
-#if defined (RADIO_IS_GEN_3P5) || defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN >= 350)
     ,gGENFSK_LL_BusyTxRx = 6U,
     gGENFSK_LL_BusyPendingTxRx = 7U,
     gGENFSK_LL_BusyRxTx = 8U,
@@ -127,7 +127,7 @@ typedef struct _GENFSK_RegsStruct
     uint32_t ntwAdrCtrl;
     uint32_t ntwAdr0;
     uint32_t ntwAdr1;
-#if defined(NXP_RADIO_GEN) && (NXP_RADIO_GEN <= 470)
+#if (NXP_RADIO_GEN <= 470)
     uint32_t ntwAdr2;
     uint32_t ntwAdr3;
 #endif
@@ -135,7 +135,7 @@ typedef struct _GENFSK_RegsStruct
     uint32_t h0Cfg;
     uint32_t h1Cfg;
     uint32_t crcCfg;
-#if defined (RADIO_IS_GEN_3P5) || defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN >= 350)
     uint32_t lengthAdj;
     uint32_t enhFeature;
     uint32_t turnaroundTime;
@@ -146,7 +146,7 @@ typedef struct _GENFSK_RegsStruct
     uint32_t whitenCfg;
     uint32_t whitenPoly;
     uint32_t whitenSzThr;
-#if !defined (RADIO_IS_GEN_3P5) && !defined(RADIO_IS_GEN_4P0)
+#if (NXP_RADIO_GEN <= 300)
     uint32_t bitRate;
 #endif
 } GENFSK_RegsStruct_t;
@@ -182,7 +182,7 @@ extern osaEventId_t mGenfskTaskEvent;
 extern genfskTimerId_t rxTimeoutTimer;
 extern uint8_t mGenfskActiveInstance;
 
-#if defined(RADIO_IS_GEN_3P0) && (RADIO_IS_GEN_3P0 != 0) && defined(RF_OSC_26MHZ) && (RF_OSC_26MHZ != 0)
+#if (NXP_RADIO_GEN >= 300) && defined(RF_OSC_26MHZ) && (RF_OSC_26MHZ != 0)
 extern uint8_t gGenfskRxRecycleHdrError;
 extern uint8_t gGenfskRxRecycleCrcError;
 #endif

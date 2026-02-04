@@ -18,7 +18,7 @@ SPDX-License-Identifier: BSD-3-Clause
 #endif /*SDK_COMPONENT_INTEGRATION > 0*/
 #include "FunctionLib.h"
 //#include "Flash_Adapter.h"
-#if defined (RADIO_IS_GEN_3P5) || defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN >= 350)
 #include "nxp_xcvr_coding_config.h"
 #endif
 #if (gGENFSK_MwsControl_c != gGENFSK_NoMwsControl_c)
@@ -41,16 +41,16 @@ SPDX-License-Identifier: BSD-3-Clause
 #define gGENFSK_MaxPacketPayloadAndAdjLength_c     (2047U)
 
 /*! @brief GENFSK Maximum RAW packet length. */
-#if defined (RADIO_IS_GEN_3P5)
+#if (NXP_RADIO_GEN >= 350)
 #define gGENFSK_MaxRawPacketLength_c     ((1UL << 10U) - 1U + gGENFSK_MaxSyncAddressSize_c)   /*1027*/
 #else
 #define gGENFSK_MaxRawPacketLength_c     ((1U << 5U) - 1U + gGENFSK_MaxSyncAddressSize_c)   /*35*/
-#endif /* defined (RADIO_IS_GEN_3P5) */
+#endif /* (NXP_RADIO_GEN >= 350) */
 
 /*! @brief GENFSK Maximum sync address size. */
 #define gGENFSK_MaxSyncAddressSize_c     (4U)
 
-#if !defined (RADIO_IS_GEN_3P5) && !defined(RADIO_IS_GEN_4P0)
+#if (NXP_RADIO_GEN <= 300)
 /*! @brief GENFSK PB_PARTITION settings for maximum TX packet length. */
 #define gGENFSK_PbPartitionMaxTx_c    (1088U)
 
@@ -76,7 +76,7 @@ typedef enum _GENFSK_sequence_commands
     RX_STOP_T2 = 9U,  /*!< RX stop @T2 Timer Compare Match (EVENT_TMR = T2_CMP). */
     RX_CANCEL = 10U,  /*!< RX cancel -- Cancels pending RX events but do not abort a RX-in-progress. */
     ABORT_ALL = 11U,  /*!< Abort all -- Cancels all pending events and abort any sequence-in-progress. */
-#if defined (RADIO_IS_GEN_3P5) || defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN >= 350)
     TR_START_NOW = 12U, /*!< - TR Start Now. */
     TR_START_T1 = 13U, /*!< TR Start @ T1 Timer Compare Match (EVENT_TMR = T1_CMP) */
     TR_START_T2 = 14U, /*!< TR Start @ T2 Timer Compare Match (EVENT_TMR = T2_CMP) */
@@ -213,7 +213,7 @@ OSA_EVENT_HANDLE_DEFINE(mGenfskTaskEvent);
 osaEventId_t mGenfskTaskEvent;
 #endif /*SDK_COMPONENT_INTEGRATION > 0*/
 
-#if defined(RADIO_IS_GEN_3P0) && (RADIO_IS_GEN_3P0 != 0) && defined(RF_OSC_26MHZ) && (RF_OSC_26MHZ != 0)
+#if (NXP_RADIO_GEN >= 300) && defined(RF_OSC_26MHZ) && (RF_OSC_26MHZ != 0)
 uint8_t gGenfskRxRecycleHdrError;
 uint8_t gGenfskRxRecycleCrcError;
 #endif
@@ -225,7 +225,7 @@ extern uint16_t gRfRadioVer_c;
 /* For the application using coexistence, gRfRadioVer_c is declared in ble_init.c */
 GENFSK_STATIC uint16_t gRfRadioVer_c = (uint16_t)(XCVR_RADIO_GEN_INVALID);
 #endif /* gGENFSK_NoMwsControl_c */
-#endif /* RADIO_IS_GEN_3P5 */
+#endif /* (NXP_RADIO_GEN <= 350) */
 
 /*******************************************************************************
  * Code
@@ -246,11 +246,11 @@ GENFSK_STATIC_INLINE void GENFSK_Command(GENFSK_sequence_commands command)
         /* LCOV_EXCL_STOP */
         RADIO_CTRL->RF_CTRL_OVRD &= ~RADIO_CTRL_RF_CTRL_OVRD_RBME_CLK_EN_OVRD_MASK;
     }
-#endif /* defined(RADIO_IS_GEN_3P5) */
+#endif /* (NXP_RADIO_GEN >= 350) */
     GENFSK->XCVR_CTRL = (uint32_t)command;
 }
 
-#if defined (RADIO_IS_GEN_3P5) || defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN >= 350)
 static genfskStatus_t GENFSK_SelectRateConfig(uint8_t instanceId, genfskRadioMode_t radioModeIn, genfskDataRate_t dataRate)
 {
     genfskStatus_t status = gGenfskSuccess_c;
@@ -299,7 +299,7 @@ static void GENFSK_ChangeMode(uint8_t instanceId, const GENFSK_radio_config_t *r
     }
     
     // K4W1TV TBD
-#if defined (RADIO_IS_GEN_3P5) && !defined(RADIO_IS_GEN_4P0) && !defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN == 350)
     /* TODO: remove this after radio init sequence rework as XCVR_MISC->XCVR_CTRL is overwritten during radio init*/
     XCVR_MISC->XCVR_CTRL &= (uint32_t)~(uint32_t)(XCVR_CTRL_XCVR_CTRL_RADIO1_IRQ_SEL_MASK);
     XCVR_MISC->XCVR_CTRL |= (uint32_t)(XCVR_CTRL_XCVR_CTRL_RADIO1_IRQ_SEL(GENFSK_LL));
@@ -316,7 +316,7 @@ static void GENFSK_ChangeMode(uint8_t instanceId, const GENFSK_radio_config_t *r
     RBME->WHITEN_POLY = genfskLocal[instanceId].genfskRegs.whitenPoly;
     RBME->WHITEN_SZ_THR = genfskLocal[instanceId].genfskRegs.whitenSzThr;
 }
-#endif /* defined (RADIO_IS_GEN_3P5) */
+#endif /* (NXP_RADIO_GEN >= 350) */
 
 GENFSK_STATIC genfskStatus_t GENFSK_GetBusyStatus(GENFSK_LL_state_t genfskState)
 {
@@ -343,7 +343,7 @@ GENFSK_STATIC genfskStatus_t GENFSK_GetBusyStatus(GENFSK_LL_state_t genfskState)
     case gGENFSK_LL_BusyPendingTx:
         status = gGenfskBusyPendingTx_c;
         break;
-#if defined (RADIO_IS_GEN_3P5)
+#if (NXP_RADIO_GEN >= 350)
     case gGENFSK_LL_BusyRxTx:
         status = gGenfskBusyRx_c;
         break;
@@ -372,7 +372,7 @@ static void GENFSK_SwitchToInstance(uint8_t instanceId)
 {
     uint32_t irqSts;
 
-#if !defined (RADIO_IS_GEN_3P5) && !defined(RADIO_IS_GEN_4P0) && !defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN <= 300)
     radio_mode_t radioMode = NUM_RADIO_MODES;
 #else
     const xcvr_config_t *xcvrConfig = NULL;
@@ -390,14 +390,14 @@ static void GENFSK_SwitchToInstance(uint8_t instanceId)
     GENFSK->XCVR_CFG &= ~(GENFSK_XCVR_CFG_RX_DEWHITEN_DIS_MASK |
                           GENFSK_XCVR_CFG_TX_WHITEN_DIS_MASK |
                           GENFSK_XCVR_CFG_SW_CRC_EN_MASK |
-#if defined (RADIO_IS_GEN_3P5)
+#if (NXP_RADIO_GEN >= 350)
                           GENFSK_XCVR_CFG_PREAMBLE_SEL_MASK |
 #endif
                           GENFSK_XCVR_CFG_PREAMBLE_SZ_MASK);
 
     /* Restore all registers from Instance's storage */
     GENFSK->XCVR_CFG = genfskLocal[instanceId].genfskRegs.xcvrCfg;
-#if defined (RADIO_IS_GEN_3P5) || defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN >= 350)
     GENFSK->CHANNEL_NUM0 = genfskLocal[instanceId].genfskRegs.channelNum;
 #else
     GENFSK->CHANNEL_NUM = genfskLocal[instanceId].genfskRegs.channelNum;
@@ -406,19 +406,19 @@ static void GENFSK_SwitchToInstance(uint8_t instanceId)
     GENFSK->NTW_ADR_CTRL = genfskLocal[instanceId].genfskRegs.ntwAdrCtrl;
     GENFSK->NTW_ADR_0 = genfskLocal[instanceId].genfskRegs.ntwAdr0;
     GENFSK->NTW_ADR_1 = genfskLocal[instanceId].genfskRegs.ntwAdr1;
-#if defined(NXP_RADIO_GEN) && (NXP_RADIO_GEN <= 470)
+#if (NXP_RADIO_GEN <= 470)
     GENFSK->NTW_ADR_2 = genfskLocal[instanceId].genfskRegs.ntwAdr2;
     GENFSK->NTW_ADR_3 = genfskLocal[instanceId].genfskRegs.ntwAdr3;
 #endif
     GENFSK->PACKET_CFG = genfskLocal[instanceId].genfskRegs.packetCfg;
     GENFSK->H0_CFG = genfskLocal[instanceId].genfskRegs.h0Cfg;
     GENFSK->H1_CFG = genfskLocal[instanceId].genfskRegs.h1Cfg;
-#if defined (RADIO_IS_GEN_3P5)
+#if (NXP_RADIO_GEN >= 350)
     GENFSK->LENGTH_ADJ = genfskLocal[instanceId].genfskRegs.lengthAdj;
     GENFSK->ENH_FEATURE = genfskLocal[instanceId].genfskRegs.enhFeature;
     GENFSK->TURNAROUND_TIME = genfskLocal[instanceId].genfskRegs.turnaroundTime;
     //GENFSK->BITRATE = genfskLocal[instanceId].genfskRegs.bitRate;
-#elif defined (RADIO_IS_GEN_4P5)
+#elif (NXP_RADIO_GEN >= 450)
     GENFSK->CRC_CFG = genfskLocal[instanceId].genfskRegs.crcCfg;
 #else
     GENFSK->CRC_INIT = genfskLocal[instanceId].genfskRegs.crcInit;
@@ -430,7 +430,7 @@ static void GENFSK_SwitchToInstance(uint8_t instanceId)
     GENFSK->BITRATE = genfskLocal[instanceId].genfskRegs.bitRate;
 #endif
 
-#if !defined (RADIO_IS_GEN_3P5) && !defined(RADIO_IS_GEN_4P0) && !defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN <= 300)
         (void)GENFSK_GetXcvrConfig(genfskLocal[instanceId].radioConfig.radioMode, &radioMode);
         (void)XCVR_ChangeMode(radioMode, (data_rate_t)genfskLocal[instanceId].radioConfig.dataRate);
 #else
@@ -439,9 +439,9 @@ static void GENFSK_SwitchToInstance(uint8_t instanceId)
 #endif
 
     if (
-#ifndef RADIO_IS_GEN_3P5
+#if (NXP_RADIO_GEN <= 300)
         (genfskLocal[instanceId].radioConfig.radioMode == gGenfskFsk) ||
-#endif /* RADIO_IS_GEN_3P5 */
+#endif /* (NXP_RADIO_GEN <= 300) */
         (genfskLocal[instanceId].radioConfig.radioMode == gGenfskMsk)
         )
     {
@@ -536,7 +536,7 @@ genfskStatus_t GENFSK_SetBleWhitenInit(uint8_t instanceId, uint8_t channelNum)
             the final formatting is as follows:*/
             tempValInit = (uint16_t)(channel) | 0x40U;
 
-#if !defined (RADIO_IS_GEN_3P5) && !defined(RADIO_IS_GEN_4P0) && !defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN <= 300)
             genfskLocal[instanceId].genfskRegs.whitenCfg &= ~GENFSK_WHITEN_CFG_WHITEN_INIT_MASK;
             genfskLocal[instanceId].genfskRegs.whitenCfg |= GENFSK_WHITEN_CFG_WHITEN_INIT(tempValInit);
             GENFSK->WHITEN_CFG = genfskLocal[instanceId].genfskRegs.whitenCfg;
@@ -728,7 +728,7 @@ genfskStatus_t GENFSK_AllocInstance(uint8_t *pInstanceId, const GENFSK_radio_con
     return status;
 }
 
-#if defined( RADIO_IS_GEN_3P5 ) || defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN >= 350)
 genfskStatus_t GENFSK_RadioConfigWithRbme(uint8_t instanceId, const GENFSK_radio_config_t *radioConfig, const xcvr_coding_config_t **rbmeConf)
 {
     genfskStatus_t status = gGenfskSuccess_c;
@@ -812,13 +812,13 @@ genfskStatus_t GENFSK_RadioConfigWithRbme(uint8_t instanceId, const GENFSK_radio
                         xcvr_status = XCVR_SetDcocDacTrims(&mXcvrDacTrim);
                     }
 #else
-#if defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN >= 450)
                     /* backup the LDO output voltage trim control as it is configured by the app to set the maximum tx power */
                     uint32_t ldo_1_ant_trim;
                     ldo_1_ant_trim = (uint8_t)((XCVR_ANALOG->LDO_1 & XCVR_ANALOG_LDO_1_LDO_ANT_TRIM_MASK) >> XCVR_ANALOG_LDO_1_LDO_ANT_TRIM_SHIFT);
 #endif
                     xcvr_status = XCVR_Init(&xcvrConfig, &rbmeConfig);
-#if defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN >= 450)
                     /* restore the LDO output voltage trim control as it is modified during the call to XCVR_Init */
                     uint32_t temp_trim;
                     temp_trim = XCVR_ANALOG->LDO_1;
@@ -887,12 +887,12 @@ genfskStatus_t GENFSK_RadioConfigWithRbme(uint8_t instanceId, const GENFSK_radio
 
     return status;
 }
-#endif /* RADIO_IS_GEN_3P5 */
+#endif /* (NXP_RADIO_GEN >= 350) */
 
 genfskStatus_t GENFSK_RadioConfig(uint8_t instanceId, const GENFSK_radio_config_t *radioConfig)
 {
     genfskStatus_t status = gGenfskSuccess_c;
-#if !defined (RADIO_IS_GEN_3P5) && !defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN <= 300)
     genfskDataRate_t dataRate;
 
     radio_mode_t radioMode = NUM_RADIO_MODES;
@@ -993,7 +993,7 @@ genfskStatus_t GENFSK_SetPacketConfig(uint8_t instanceId, const GENFSK_packet_co
     {
         status = gGenfskInvalidParameters_c;
     }
-#if !defined (RADIO_IS_GEN_3P5)
+#if (NXP_RADIO_GEN <= 300)
     else if (packetConfig->preambleSizeBytes > 7U)
 #else
     else if (packetConfig->preambleSizeBytes > 511U)
@@ -1009,7 +1009,7 @@ genfskStatus_t GENFSK_SetPacketConfig(uint8_t instanceId, const GENFSK_packet_co
     {
         status = gGenfskInvalidParameters_c;
     }
-#if !defined (RADIO_IS_GEN_3P5)
+#if (NXP_RADIO_GEN <= 300)
     else if ((packetConfig->lengthAdjBytes < -31) || (packetConfig->lengthAdjBytes > 31))
 #else
     else if ((packetConfig->lengthAdjBytes < -1024) || (packetConfig->lengthAdjBytes > 1023))
@@ -1039,7 +1039,7 @@ genfskStatus_t GENFSK_SetPacketConfig(uint8_t instanceId, const GENFSK_packet_co
 
         /* Save the configuration in local structure. */
         genfskLocal[instanceId].genfskRegs.xcvrCfg &= ~(GENFSK_XCVR_CFG_PREAMBLE_SZ_MASK);
-#if defined (RADIO_IS_GEN_3P5)
+#if (NXP_RADIO_GEN >= 350)
         genfskLocal[instanceId].genfskRegs.xcvrCfg &= ~(GENFSK_XCVR_CFG_PREAMBLE_SEL_MASK | GENFSK_XCVR_CFG_GEN_PREAMBLE_MASK);  /* other modes than 0 and 1 not supported yet */
         if (packetConfig->preambleBytePattern != 0U)
         {
@@ -1051,7 +1051,7 @@ genfskStatus_t GENFSK_SetPacketConfig(uint8_t instanceId, const GENFSK_packet_co
         genfskLocal[instanceId].genfskRegs.packetCfg &= (uint32_t)~(uint32_t)(GENFSK_PACKET_CFG_LENGTH_SZ_MASK |
                                                                                   GENFSK_PACKET_CFG_LENGTH_BIT_ORD_MASK |
                                                                                       GENFSK_PACKET_CFG_SYNC_ADDR_SZ_MASK |
-#if !defined (RADIO_IS_GEN_3P5) && !defined(RADIO_IS_GEN_4P0) && !defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN <= 300)
                                                                                           GENFSK_PACKET_CFG_LENGTH_ADJ_MASK |
 #else
                                                                                              GENFSK_PACKET_CFG_AA_PLAYBACK_CNT_MASK |
@@ -1059,7 +1059,7 @@ genfskStatus_t GENFSK_SetPacketConfig(uint8_t instanceId, const GENFSK_packet_co
 #endif
                                                                                                 GENFSK_PACKET_CFG_H0_SZ_MASK |
                                                                                                   GENFSK_PACKET_CFG_H1_SZ_MASK);
-#if defined (RADIO_IS_GEN_3P5)
+#if (NXP_RADIO_GEN >= 350)
         genfskLocal[instanceId].genfskRegs.lengthAdj &= (uint32_t)~(uint32_t)(GENFSK_LENGTH_ADJ_LENGTH_ADJ_MASK);
 #endif
 
@@ -1069,7 +1069,7 @@ genfskStatus_t GENFSK_SetPacketConfig(uint8_t instanceId, const GENFSK_packet_co
         genfskLocal[instanceId].genfskRegs.h1Cfg &= (uint32_t)~(uint32_t)(GENFSK_H1_CFG_H1_MATCH_MASK |
                                                                              GENFSK_H1_CFG_H1_MASK_MASK);
 
-#if !defined (RADIO_IS_GEN_3P5)
+#if (NXP_RADIO_GEN <= 300)
         if ((genfskLocal[instanceId].packetType == gGenfskFormattedPacket) && (genfskLocal[instanceId].radioConfig.radioMode != gGenfskMsk))
 #else
         if (genfskLocal[instanceId].packetType == gGenfskFormattedPacket)
@@ -1078,7 +1078,7 @@ genfskStatus_t GENFSK_SetPacketConfig(uint8_t instanceId, const GENFSK_packet_co
             genfskLocal[instanceId].genfskRegs.packetCfg |= (uint32_t)(GENFSK_PACKET_CFG_LENGTH_SZ(packetConfig->lengthSizeBits) |
                                                                            GENFSK_PACKET_CFG_LENGTH_BIT_ORD(packetConfig->lengthBitOrder) |
                                                                                GENFSK_PACKET_CFG_SYNC_ADDR_SZ(packetConfig->syncAddrSizeBytes) |
-#if !defined (RADIO_IS_GEN_3P5) && !defined(RADIO_IS_GEN_4P0) && !defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN <= 300)
                                                                                    GENFSK_PACKET_CFG_LENGTH_ADJ(packetConfig->lengthAdjBytes) |
 #else
                                                                                      GENFSK_PACKET_CFG_AA_PLAYBACK_CNT(0) | /* Default configuration is AA_PLAYBACK=0 + FETCH_AA=0 */
@@ -1086,7 +1086,7 @@ genfskStatus_t GENFSK_SetPacketConfig(uint8_t instanceId, const GENFSK_packet_co
 #endif
                                                                                        GENFSK_PACKET_CFG_H0_SZ(packetConfig->h0SizeBits) |
                                                                                            GENFSK_PACKET_CFG_H1_SZ(packetConfig->h1SizeBits));
-#if defined (RADIO_IS_GEN_3P5)
+#if (NXP_RADIO_GEN >= 350)
             genfskLocal[instanceId].genfskRegs.lengthAdj |= (uint32_t)(GENFSK_LENGTH_ADJ_LENGTH_ADJ(packetConfig->lengthAdjBytes));
 #endif
             genfskLocal[instanceId].genfskRegs.h0Cfg |= (uint32_t)(GENFSK_H0_CFG_H0_MATCH(packetConfig->h0Match) |
@@ -1096,7 +1096,7 @@ genfskStatus_t GENFSK_SetPacketConfig(uint8_t instanceId, const GENFSK_packet_co
 
             genfskLocal[instanceId].genfskRegs.h1Cfg |= (uint32_t)(GENFSK_H1_CFG_H1_MATCH(packetConfig->h1Match) |
                                                                        GENFSK_H1_CFG_H1_MASK(packetConfig->h1Mask));
-#if defined (RADIO_IS_GEN_3P5)
+#if (NXP_RADIO_GEN >= 350)
             if (genfskLocal[instanceId].radioConfig.radioMode == gGenfskMsk)
             {
                 genfskLocal[instanceId].genfskRegs.xcvrCfg |= (GENFSK_XCVR_CFG_TX_WHITEN_DIS_MASK |
@@ -1119,20 +1119,20 @@ genfskStatus_t GENFSK_SetPacketConfig(uint8_t instanceId, const GENFSK_packet_co
         if (mGenfskActiveInstance == instanceId)
         {
             GENFSK->XCVR_CFG &= ~GENFSK_XCVR_CFG_PREAMBLE_SZ_MASK;
-#if defined (RADIO_IS_GEN_3P5)
+#if (NXP_RADIO_GEN >= 350)
             GENFSK->XCVR_CFG &= ~(GENFSK_XCVR_CFG_PREAMBLE_SEL_MASK);  /* other modes not supported yet */
 #endif
             GENFSK->XCVR_CFG |= (genfskLocal[instanceId].genfskRegs.xcvrCfg &
 
                                         (GENFSK_XCVR_CFG_PREAMBLE_SZ_MASK |
-#if defined (RADIO_IS_GEN_3P5)
+#if (NXP_RADIO_GEN >= 350)
                                           GENFSK_XCVR_CFG_PREAMBLE_SEL_MASK | GENFSK_XCVR_CFG_GEN_PREAMBLE_MASK |
 #endif
                                              GENFSK_XCVR_CFG_TX_WHITEN_DIS_MASK |
                                                  GENFSK_XCVR_CFG_RX_DEWHITEN_DIS_MASK |
                                                      GENFSK_XCVR_CFG_SW_CRC_EN_MASK));
             GENFSK->PACKET_CFG = genfskLocal[instanceId].genfskRegs.packetCfg;
-#if defined (RADIO_IS_GEN_3P5)
+#if (NXP_RADIO_GEN >= 350)
             GENFSK->LENGTH_ADJ = genfskLocal[instanceId].genfskRegs.lengthAdj;
 #endif
             GENFSK->H0_CFG = genfskLocal[instanceId].genfskRegs.h0Cfg;
@@ -1171,7 +1171,7 @@ genfskStatus_t GENFSK_GetPacketConfig(uint8_t instanceId, GENFSK_packet_config_t
         temp = ((genfskLocal[instanceId].genfskRegs.packetCfg & GENFSK_PACKET_CFG_LENGTH_BIT_ORD_MASK) >> GENFSK_PACKET_CFG_LENGTH_BIT_ORD_SHIFT);
         packetConfig->lengthBitOrder = (genfskPacketCfgLengthBitOrd_t) temp;
         packetConfig->syncAddrSizeBytes = (uint8_t) ((genfskLocal[instanceId].genfskRegs.packetCfg & GENFSK_PACKET_CFG_SYNC_ADDR_SZ_MASK) >> GENFSK_PACKET_CFG_SYNC_ADDR_SZ_SHIFT);
-#if defined (RADIO_IS_GEN_3P5) || defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN >= 350)
         temp = ((genfskLocal[instanceId].genfskRegs.lengthAdj & GENFSK_LENGTH_ADJ_LENGTH_ADJ_MASK) >> GENFSK_LENGTH_ADJ_LENGTH_ADJ_SHIFT);
 #else
         temp = ((genfskLocal[instanceId].genfskRegs.packetCfg & GENFSK_PACKET_CFG_LENGTH_ADJ_MASK) >> GENFSK_PACKET_CFG_LENGTH_ADJ_SHIFT);
@@ -1184,7 +1184,7 @@ genfskStatus_t GENFSK_GetPacketConfig(uint8_t instanceId, GENFSK_packet_config_t
         packetConfig->h1Match = (uint16_t) ((genfskLocal[instanceId].genfskRegs.h1Cfg & GENFSK_H1_CFG_H1_MATCH_MASK) >> GENFSK_H1_CFG_H1_MATCH_SHIFT);
         packetConfig->h1Mask = (uint16_t) ((genfskLocal[instanceId].genfskRegs.h1Cfg & GENFSK_H1_CFG_H1_MASK_MASK) >> GENFSK_H1_CFG_H1_MASK_SHIFT);
         packetConfig->packetType = genfskLocal[instanceId].packetType;
-#if defined (RADIO_IS_GEN_3P5)
+#if (NXP_RADIO_GEN >= 350)
         packetConfig->preambleBytePattern = (uint8_t) ((genfskLocal[instanceId].genfskRegs.xcvrCfg & GENFSK_XCVR_CFG_GEN_PREAMBLE_MASK) >> GENFSK_XCVR_CFG_GEN_PREAMBLE_SHIFT);
 #endif
     }
@@ -1196,7 +1196,7 @@ genfskStatus_t GENFSK_SetModeConfig(uint8_t instanceId, const GENFSK_mode_config
 {
     genfskStatus_t status = gGenfskSuccess_c;
 
-#if defined (RADIO_IS_GEN_3P5)
+#if (NXP_RADIO_GEN >= 350)
 #if gGENFSK_CheckParams_c == 1
     if (instanceId >= gGENFSK_InstancesCnt_c)
     {
@@ -1265,7 +1265,7 @@ genfskStatus_t GENFSK_GetModeConfig(uint8_t instanceId, GENFSK_mode_config_t *mo
 {
     genfskStatus_t status = gGenfskSuccess_c;
 
-#if defined (RADIO_IS_GEN_3P5)
+#if (NXP_RADIO_GEN >= 350)
 #if gGENFSK_CheckParams_c == 1
     if (instanceId >= gGENFSK_InstancesCnt_c)
     {
@@ -1328,7 +1328,7 @@ genfskStatus_t GENFSK_SetCrcConfig(uint8_t instanceId, const GENFSK_crc_config_t
         genfskLocal[instanceId].crcEnable = crcConfig->crcEnable;
         genfskLocal[instanceId].crcRecvInvalid = crcConfig->crcRecvInvalid;
 
-#if !defined (RADIO_IS_GEN_3P5) && !defined(RADIO_IS_GEN_4P0) && !defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN <= 300)
         genfskLocal[instanceId].genfskRegs.crcCfg &= (uint32_t)~(uint32_t)(GENFSK_CRC_CFG_CRC_SZ_MASK |
                                                                                GENFSK_CRC_CFG_CRC_START_BYTE_MASK |
                                                                                    GENFSK_CRC_CFG_CRC_REF_IN_MASK |
@@ -1358,7 +1358,7 @@ genfskStatus_t GENFSK_SetCrcConfig(uint8_t instanceId, const GENFSK_crc_config_t
         genfskLocal[instanceId].genfskRegs.crcInit = crcConfig->crcSeed << ((4U - crcConfig->crcSize) << 3U);
         genfskLocal[instanceId].genfskRegs.crcPoly = crcConfig->crcPoly << ((4U - crcConfig->crcSize) << 3U);
         genfskLocal[instanceId].genfskRegs.crcXorOut = crcConfig->crcXorOut  << ((4U - crcConfig->crcSize) << 3U);
-#if !defined (RADIO_IS_GEN_3P5)
+#if (NXP_RADIO_GEN <= 300)
         if ((genfskLocal[instanceId].crcEnable == gGenfskCrcEnable) && (genfskLocal[instanceId].packetType == gGenfskFormattedPacket) &&
             (genfskLocal[instanceId].radioConfig.radioMode != gGenfskMsk))
 #else
@@ -1375,7 +1375,7 @@ genfskStatus_t GENFSK_SetCrcConfig(uint8_t instanceId, const GENFSK_crc_config_t
 
         if (mGenfskActiveInstance == instanceId)
         {
-#if defined (RADIO_IS_GEN_3P5) || defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN >= 350)
             RBME->CRCW_CFG3  = genfskLocal[instanceId].genfskRegs.crcCfg;
             RBME->CRC_INIT = genfskLocal[instanceId].genfskRegs.crcInit;
             RBME->CRC_POLY = genfskLocal[instanceId].genfskRegs.crcPoly;
@@ -1398,7 +1398,7 @@ genfskStatus_t GENFSK_SetCrcConfig(uint8_t instanceId, const GENFSK_crc_config_t
 genfskStatus_t GENFSK_GetCrcConfig(uint8_t instanceId, GENFSK_crc_config_t *crcConfig)
 {
     genfskStatus_t status = gGenfskSuccess_c;
-#if defined (RADIO_IS_GEN_3P5) || defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN >= 350)
     uint32_t temp;
 #endif
 #if gGENFSK_CheckParams_c == 1
@@ -1420,7 +1420,7 @@ genfskStatus_t GENFSK_GetCrcConfig(uint8_t instanceId, GENFSK_crc_config_t *crcC
     {
         crcConfig->crcEnable = genfskLocal[instanceId].crcEnable;
         crcConfig->crcRecvInvalid = genfskLocal[instanceId].crcRecvInvalid;
-#if !defined (RADIO_IS_GEN_3P5) && !defined(RADIO_IS_GEN_4P0) && !defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN <= 300)
         crcConfig->crcSize = (uint8_t) ((genfskLocal[instanceId].genfskRegs.crcCfg & GENFSK_CRC_CFG_CRC_SZ_MASK) >> GENFSK_CRC_CFG_CRC_SZ_SHIFT);
         crcConfig->crcStartByte = (uint8_t) ((genfskLocal[instanceId].genfskRegs.crcCfg & GENFSK_CRC_CFG_CRC_START_BYTE_MASK) >> GENFSK_CRC_CFG_CRC_START_BYTE_SHIFT);
         crcConfig->crcRefIn = (genfskCrcCfgCrcRefIn_t)((genfskLocal[instanceId].genfskRegs.crcCfg & GENFSK_CRC_CFG_CRC_REF_IN_MASK) >> GENFSK_CRC_CFG_CRC_REF_IN_SHIFT);
@@ -1498,7 +1498,7 @@ genfskStatus_t GENFSK_SetWhitenerConfig(uint8_t instanceId, const GENFSK_whitene
         tempValPoly = GENFSK_Reverse9Bit(tempValPoly & 0x1FFU);
         tempValPoly >>= 9U - whitenerConfig->whitenSize;
 
-#if !defined (RADIO_IS_GEN_3P5) && !defined(RADIO_IS_GEN_4P0) && !defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN <= 300)
         genfskLocal[instanceId].genfskRegs.whitenCfg &= ~(GENFSK_WHITEN_CFG_WHITEN_START_MASK |
                                                               GENFSK_WHITEN_CFG_WHITEN_END_MASK |
                                                                   GENFSK_WHITEN_CFG_WHITEN_B4_CRC_MASK |
@@ -1575,7 +1575,7 @@ genfskStatus_t GENFSK_SetWhitenerConfig(uint8_t instanceId, const GENFSK_whitene
 
         if (mGenfskActiveInstance == instanceId)
         {
-#if !defined (RADIO_IS_GEN_3P5) && !defined(RADIO_IS_GEN_4P0) && !defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN <= 300)
             GENFSK->WHITEN_CFG = genfskLocal[instanceId].genfskRegs.whitenCfg;
             GENFSK->WHITEN_POLY = genfskLocal[instanceId].genfskRegs.whitenPoly;
             GENFSK->WHITEN_SZ_THR &= ~GENFSK_WHITEN_SZ_THR_WHITEN_SZ_THR_MASK;
@@ -1597,7 +1597,7 @@ genfskStatus_t GENFSK_SetWhitenerConfig(uint8_t instanceId, const GENFSK_whitene
 genfskStatus_t GENFSK_GetWhitenerConfig(uint8_t instanceId, GENFSK_whitener_config_t *whitenerConfig)
 {
     genfskStatus_t status = gGenfskSuccess_c;
-#if defined (RADIO_IS_GEN_3P5) || defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN >= 350)
     uint32_t temp;
 #endif
 
@@ -1619,7 +1619,7 @@ genfskStatus_t GENFSK_GetWhitenerConfig(uint8_t instanceId, GENFSK_whitener_conf
     else
     {
         whitenerConfig->whitenEnable = genfskLocal[instanceId].whitenEnable;
-#if !defined (RADIO_IS_GEN_3P5) && !defined(RADIO_IS_GEN_4P0) && !defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN <= 300)
         whitenerConfig->whitenStart = (genfskWhitenStart_t)((genfskLocal[instanceId].genfskRegs.whitenCfg & GENFSK_WHITEN_CFG_WHITEN_START_MASK) >> GENFSK_WHITEN_CFG_WHITEN_START_SHIFT);
         whitenerConfig->whitenEnd = (genfskWhitenEnd_t)((genfskLocal[instanceId].genfskRegs.whitenCfg & GENFSK_WHITEN_CFG_WHITEN_END_MASK) >> GENFSK_WHITEN_CFG_WHITEN_END_SHIFT);
         whitenerConfig->whitenB4Crc = (genfskWhitenB4Crc_t)((genfskLocal[instanceId].genfskRegs.whitenCfg & GENFSK_WHITEN_CFG_WHITEN_B4_CRC_MASK) >> GENFSK_WHITEN_CFG_WHITEN_B4_CRC_SHIFT);
@@ -1765,7 +1765,7 @@ genfskStatus_t GENFSK_SetNetworkAddress(uint8_t instanceId, uint8_t location, co
 {
 
     GENFSK_nwk_addr_t tempNwkAddress = { 0 };
-#if !defined (RADIO_IS_GEN_3P5)
+#if (NXP_RADIO_GEN <= 300)
     uint8_t *pTempNwkAddress = NULL;
 #endif
     genfskStatus_t status = gGenfskSuccess_c;
@@ -1775,7 +1775,7 @@ genfskStatus_t GENFSK_SetNetworkAddress(uint8_t instanceId, uint8_t location, co
     {
         status = gGenfskInvalidParameters_c;
     }
-#if defined(NXP_RADIO_GEN) && (NXP_RADIO_GEN <= 470)
+#if (NXP_RADIO_GEN <= 470)
     else if ((location > 3U) || (nwkAddressSettings == NULL))
 #else
     else if ((location > 1U) || (nwkAddressSettings == NULL))
@@ -1797,7 +1797,7 @@ genfskStatus_t GENFSK_SetNetworkAddress(uint8_t instanceId, uint8_t location, co
     {
         tempNwkAddress = nwkAddressSettings->nwkAddr;
 
-#if !defined (RADIO_IS_GEN_3P5)
+#if (NXP_RADIO_GEN <= 300)
         /* Twiddling is done by the HW */
         if (genfskLocal[instanceId].radioConfig.radioMode == gGenfskMsk)
         {
@@ -1810,7 +1810,7 @@ genfskStatus_t GENFSK_SetNetworkAddress(uint8_t instanceId, uint8_t location, co
                                     ((~pTempNwkAddress[0]) & 0x01U));
         }
 #endif
-#if defined (RADIO_IS_GEN_3P5) || defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN >= 350)
         genfskLocal[instanceId].genfskRegs.ntwAdrCtrl &= ~(GENFSK_NTW_ADR_CTRL_NTW_ADR_SZ_MASK | GENFSK_NTW_ADR_CTRL_NTW_ADR_THR_MASK);
         genfskLocal[instanceId].genfskRegs.ntwAdrCtrl |=  (GENFSK_NTW_ADR_CTRL_NTW_ADR_SZ(nwkAddressSettings->nwkAddrSizeBytes) |
                                                                GENFSK_NTW_ADR_CTRL_NTW_ADR_THR(nwkAddressSettings->nwkAddrThrBits));
@@ -1822,7 +1822,7 @@ genfskStatus_t GENFSK_SetNetworkAddress(uint8_t instanceId, uint8_t location, co
         {
             genfskLocal[instanceId].genfskRegs.ntwAdr1 = tempNwkAddress;
         }
-#if defined(NXP_RADIO_GEN) && (NXP_RADIO_GEN <= 470)
+#if (NXP_RADIO_GEN <= 470)
         else if (location == 2U)
         {
             genfskLocal[instanceId].genfskRegs.ntwAdr2 = tempNwkAddress;
@@ -1886,7 +1886,7 @@ genfskStatus_t GENFSK_SetNetworkAddress(uint8_t instanceId, uint8_t location, co
             GENFSK->NTW_ADR_CTRL = genfskLocal[instanceId].genfskRegs.ntwAdrCtrl;
             GENFSK->NTW_ADR_0 = genfskLocal[instanceId].genfskRegs.ntwAdr0;
             GENFSK->NTW_ADR_1 = genfskLocal[instanceId].genfskRegs.ntwAdr1;
-#if defined(NXP_RADIO_GEN) && (NXP_RADIO_GEN <= 470)
+#if (NXP_RADIO_GEN <= 470)
             GENFSK->NTW_ADR_2 = genfskLocal[instanceId].genfskRegs.ntwAdr2;
             GENFSK->NTW_ADR_3 = genfskLocal[instanceId].genfskRegs.ntwAdr3;
 #endif
@@ -1898,7 +1898,7 @@ genfskStatus_t GENFSK_SetNetworkAddress(uint8_t instanceId, uint8_t location, co
 
 genfskStatus_t GENFSK_GetNetworkAddress(uint8_t instanceId, uint8_t location, GENFSK_nwk_addr_match_t *nwkAddressSettings)
 {
-#if !defined (RADIO_IS_GEN_3P5)
+#if (NXP_RADIO_GEN <= 300)
     GENFSK_nwk_addr_t tempNwkAddress = { 0 };
     uint8_t *pTempNwkAddress = NULL;
 #endif
@@ -1921,7 +1921,7 @@ genfskStatus_t GENFSK_GetNetworkAddress(uint8_t instanceId, uint8_t location, GE
     }
     else
     {
-#if defined (RADIO_IS_GEN_3P5) || defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN >= 350)
         nwkAddressSettings->nwkAddrSizeBytes = (uint8_t) ((genfskLocal[instanceId].genfskRegs.ntwAdrCtrl & GENFSK_NTW_ADR_CTRL_NTW_ADR_SZ_MASK) >> GENFSK_NTW_ADR_CTRL_NTW_ADR_SZ_SHIFT);
         nwkAddressSettings->nwkAddrThrBits = (uint8_t) ((genfskLocal[instanceId].genfskRegs.ntwAdrCtrl & GENFSK_NTW_ADR_CTRL_NTW_ADR_THR_MASK) >> GENFSK_NTW_ADR_CTRL_NTW_ADR_THR_SHIFT);
         if (location == 0U)
@@ -1932,7 +1932,7 @@ genfskStatus_t GENFSK_GetNetworkAddress(uint8_t instanceId, uint8_t location, GE
         {
             nwkAddressSettings->nwkAddr = genfskLocal[instanceId].genfskRegs.ntwAdr1;
         }
-#if defined(NXP_RADIO_GEN) && (NXP_RADIO_GEN <= 470)
+#if (NXP_RADIO_GEN <= 470)
         else if (location == 2U)
         {
             nwkAddressSettings->nwkAddr = genfskLocal[instanceId].genfskRegs.ntwAdr2;
@@ -1974,7 +1974,7 @@ genfskStatus_t GENFSK_GetNetworkAddress(uint8_t instanceId, uint8_t location, GE
         }
 #endif
 
-#if !defined (RADIO_IS_GEN_3P5)
+#if (NXP_RADIO_GEN <= 300)
         /* Twiddling is done by the HW */
         if (genfskLocal[instanceId].radioConfig.radioMode == gGenfskMsk)
         {
@@ -2086,7 +2086,7 @@ genfskStatus_t GENFSK_SetChannelNumber(uint8_t instanceId, uint8_t channelNum)
 
         if (mGenfskActiveInstance == instanceId)
         {
-#if defined(RADIO_IS_GEN_3P5) || defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN >= 350)
             GENFSK->CHANNEL_NUM0 = genfskLocal[instanceId].genfskRegs.channelNum;
 #else
             GENFSK->CHANNEL_NUM = genfskLocal[instanceId].genfskRegs.channelNum;
@@ -2202,7 +2202,7 @@ static genfskStatus_t GENFSK_StartTxCheckParams(uint8_t instanceId, const uint8_
     {
         status = gGenfskInvalidParameters_c;
     }
-#if !defined (RADIO_IS_GEN_3P5) && !defined(RADIO_IS_GEN_4P0)
+#if (NXP_RADIO_GEN <= 300)
     else if (followedByRx)
     {
         status = gGenfskInvalidParameters_c;
@@ -2251,12 +2251,12 @@ genfskStatus_t GENFSK_StartTx(uint8_t instanceId, const uint8_t *pBuffer, uint16
                           
 genfskStatus_t GENFSK_StartTxRx(uint8_t instanceId, const uint8_t *pBuffer, uint16_t bufLengthBytes, GENFSK_timestamp_t txStartTime, bool followedByRx, GENFSK_timestamp_t rxDuration, uint8_t *pRxBuffer, uint16_t maxBufLengthBytes )
 {
-#if !defined (RADIO_IS_GEN_3P5)
+#if (NXP_RADIO_GEN <= 300)
     uint8_t codedBytes[gGENFSK_MaxSyncAddressSize_c + gGENFSK_MaxRawPacketLength_c];
 #endif
     GENFSK_timestamp_t currentTime = 0U;
     GENFSK_timestamp_t tempTime = 0U;
-#if defined (RADIO_IS_GEN_3P5) || defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN >= 350)
     GENFSK_TimeEvent_t event;
 #endif
     genfskStatus_t status = gGenfskSuccess_c;
@@ -2284,7 +2284,7 @@ genfskStatus_t GENFSK_StartTxRx(uint8_t instanceId, const uint8_t *pBuffer, uint
 #if (gGENFSK_MwsControl_c == gGENFSK_LLMwsControl_c)
         /* Compute sequence duration */
         tempTime = GENFSK_GetTxDuration(instanceId, bufLengthBytes) + gGENFSK_Overhead_c;
-#if defined (RADIO_IS_GEN_3P5) || defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN >= 350)
         if (followedByRx)
         {
             tempTime += rxDuration + genfskLocal[mGenfskActiveInstance].genfskRegs.turnaroundTime;
@@ -2310,7 +2310,7 @@ genfskStatus_t GENFSK_StartTxRx(uint8_t instanceId, const uint8_t *pBuffer, uint
                 {
                     GENFSK_SwitchToInstance(instanceId);
                 }
-#if !defined (RADIO_IS_GEN_3P5) && !defined(RADIO_IS_GEN_4P0) && !defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN <= 300)
                 if ((genfskLocal[instanceId].packetType == gGenfskRawPacket) ||
                     (genfskLocal[instanceId].radioConfig.radioMode == gGenfskMsk))
                 {
@@ -2329,7 +2329,7 @@ genfskStatus_t GENFSK_StartTxRx(uint8_t instanceId, const uint8_t *pBuffer, uint
                     }
                     GENFSK->PACKET_CFG |= GENFSK_PACKET_CFG_LENGTH_ADJ(tempLength);
                 }
-#else /* !defined (RADIO_IS_GEN_3P5) && !defined(RADIO_IS_GEN_4P0)*/
+#else /* (NXP_RADIO_GEN <= 300)*/
                 /* With RADIO_IS_GEN_3P0, gGENFSK_MaxRawPacketLength_c length without the SYNC address was 31 bytes. To increase
                 the amount of data by 4 bytes, H0 and H1 fields were used. With RADIO_IS_GEN_3P5,  gGENFSK_MaxRawPacketLength_c
                 length without the SYNC address is 1023 bytes. Gaining 4 additionnal bytes with H0 and H1 is no more relevant.
@@ -2341,9 +2341,9 @@ genfskStatus_t GENFSK_StartTxRx(uint8_t instanceId, const uint8_t *pBuffer, uint
                     GENFSK->LENGTH_ADJ &= ~(GENFSK_LENGTH_ADJ_LENGTH_ADJ_MASK);
                     GENFSK->LENGTH_ADJ |= GENFSK_LENGTH_ADJ_LENGTH_ADJ(tempLength);
                 }
-#endif /* !defined (RADIO_IS_GEN_3P5) && !defined(RADIO_IS_GEN_4P0) */
+#endif /* (NXP_RADIO_GEN <= 300) */
 
-#if !defined (RADIO_IS_GEN_3P5) && !defined(RADIO_IS_GEN_4P0) && !defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN <= 300)
                 /* Set the packet buffer partition to maximum TX packet. */
                 GENFSK->PB_PARTITION = gGENFSK_PbPartitionMaxTx_c;
 #else
@@ -2352,7 +2352,7 @@ genfskStatus_t GENFSK_StartTxRx(uint8_t instanceId, const uint8_t *pBuffer, uint
                 GENFSK->XCVR_CFG = genfskLocal[instanceId].genfskRegs.xcvrCfg;
 #endif
 
-#if !defined (RADIO_IS_GEN_3P5) && !defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN <= 300)
                 if (genfskLocal[instanceId].radioConfig.radioMode == gGenfskMsk)
                 {
                     FLib_MemSet(codedBytes, 0, sizeof(codedBytes));
@@ -2373,7 +2373,7 @@ genfskStatus_t GENFSK_StartTxRx(uint8_t instanceId, const uint8_t *pBuffer, uint
                     GENFSK_WritePacketBuffer(0, pBuffer, bufLengthBytes);
                 }
 
-#if !defined (RADIO_IS_GEN_3P5) && !defined(RADIO_IS_GEN_4P0) && !defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN <= 300)
                 warmupTime = (GENFSK->XCVR_CFG & GENFSK_XCVR_CFG_TX_WARMUP_MASK) >> GENFSK_XCVR_CFG_TX_WARMUP_SHIFT;
 #else
                 warmupTime = ((GENFSK->WARMUP_TIME & GENFSK_WARMUP_TIME_TX_WARMUP_MASK) >> GENFSK_WARMUP_TIME_TX_WARMUP_SHIFT);
@@ -2381,7 +2381,7 @@ genfskStatus_t GENFSK_StartTxRx(uint8_t instanceId, const uint8_t *pBuffer, uint
                 /* Start TX now. */
                 if (txStartTime == 0ULL)
                 {
-#if defined (RADIO_IS_GEN_3P5) || defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN >= 350)
                     if (followedByRx)
                     {
                         genfskLocal[instanceId].genfskState = gGENFSK_LL_BusyTxRx;
@@ -2434,13 +2434,13 @@ genfskStatus_t GENFSK_StartTxRx(uint8_t instanceId, const uint8_t *pBuffer, uint
                     }
                     else
                     {
-#if !defined(RADIO_IS_GEN_4P0) && !defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN <= 350)
                         GENFSK->T1_CMP = (uint32_t) ((tempTime & GENFSK_T1_CMP_T1_CMP_MASK) | GENFSK_T1_CMP_T1_CMP_EN_MASK);
 #else
                         GENFSK->T1_CMP = (uint32_t) tempTime;
                         GENFSK->XCVR_CFG |= GENFSK_XCVR_CFG_T1_CMP_EN(1);
 #endif
-#if defined (RADIO_IS_GEN_3P5) || defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN >= 350)
                         if (followedByRx)
                         {
                             genfskLocal[instanceId].genfskState = gGENFSK_LL_BusyPendingTxRx;
@@ -2504,7 +2504,7 @@ genfskStatus_t GENFSK_CancelPendingTx(void)
         /* Enter critical section. */
         OSA_InterruptDisable();
 
-#if defined (RADIO_IS_GEN_3P5)
+#if (NXP_RADIO_GEN >= 350)
         if ((genfskLocal[mGenfskActiveInstance].genfskState == gGENFSK_LL_BusyTxRx) || (genfskLocal[mGenfskActiveInstance].genfskState == gGENFSK_LL_BusyPendingTxRx))
         {
             GENFSK_Command(TR_CANCEL);
@@ -2518,7 +2518,7 @@ genfskStatus_t GENFSK_CancelPendingTx(void)
         /* Wait for XCVR to become idle. */
         while ((GENFSK->XCVR_CTRL & GENFSK_XCVR_CTRL_XCVR_BUSY_MASK) != 0U) {};
 
-#if defined (RADIO_IS_GEN_3P5)
+#if (NXP_RADIO_GEN >= 350)
         /* Deactivate whitening */
         GENFSK->XCVR_CFG |= (GENFSK_XCVR_CFG_TX_WHITEN_DIS_MASK);
 #endif
@@ -2568,7 +2568,7 @@ static genfskStatus_t GENFSK_StartRxCheckParams(uint8_t instanceId, uint8_t *pRx
         status = gGenfskInvalidParameters_c;
     }
 #endif
-#if !defined (RADIO_IS_GEN_3P5) && !defined(RADIO_IS_GEN_4P0)
+#if (NXP_RADIO_GEN <= 300)
     else if ((pTxBuffer != NULL) || (txBufLengthBytes != 0U))
     {
         status = gGenfskInvalidParameters_c;
@@ -2627,7 +2627,7 @@ genfskStatus_t GENFSK_StartRxTx(uint8_t instanceId, uint8_t *pRxBuffer, uint16_t
     GENFSK_TimeEvent_t event;
     GENFSK_timestamp_t currentTime = 0;
     GENFSK_timestamp_t tempTime = 0;
-#if defined (RADIO_IS_GEN_3P5)
+#if (NXP_RADIO_GEN >= 350)
     bool autoAck = FALSE;
 #endif
     genfskStatus_t status = gGenfskSuccess_c;
@@ -2649,7 +2649,7 @@ genfskStatus_t GENFSK_StartRxTx(uint8_t instanceId, uint8_t *pRxBuffer, uint16_t
         /* Enter critical section. */
         OSA_InterruptDisable();
 
-#if defined (RADIO_IS_GEN_3P5)
+#if (NXP_RADIO_GEN >= 350)
         if ((pTxBuffer != NULL) && (txBufLengthBytes != 0U))
         {
             autoAck = TRUE;
@@ -2658,7 +2658,7 @@ genfskStatus_t GENFSK_StartRxTx(uint8_t instanceId, uint8_t *pRxBuffer, uint16_t
 #if (gGENFSK_MwsControl_c == gGENFSK_LLMwsControl_c)
         /* Compute sequence duration */
         tempTime = rxDuration + gGENFSK_Overhead_c;
-#if defined (RADIO_IS_GEN_3P5)
+#if (NXP_RADIO_GEN >= 350)
         if (autoAck)
         {
             tempTime += GENFSK_GetTxDuration(instanceId, txBufLengthBytes) + genfskLocal[instanceId].genfskRegs.turnaroundTime;
@@ -2683,7 +2683,7 @@ genfskStatus_t GENFSK_StartRxTx(uint8_t instanceId, uint8_t *pRxBuffer, uint16_t
                 {
                     GENFSK_SwitchToInstance(instanceId);
                 }
-#if (!defined (RADIO_IS_GEN_3P5) && !defined(RADIO_IS_GEN_4P0)) && !defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN <= 300)
                 if ((genfskLocal[instanceId].packetType == gGenfskRawPacket) ||
                     (genfskLocal[instanceId].radioConfig.radioMode == gGenfskMsk))
                 {
@@ -2703,7 +2703,7 @@ genfskStatus_t GENFSK_StartRxTx(uint8_t instanceId, uint8_t *pRxBuffer, uint16_t
                     }
                     GENFSK->PACKET_CFG |= GENFSK_PACKET_CFG_LENGTH_ADJ(tempLength);
                 }
-#else /* !defined (RADIO_IS_GEN_3P5) && !defined(RADIO_IS_GEN_4P0) */
+#else /* (NXP_RADIO_GEN <= 300) */
                 /* With RADIO_IS_GEN_3P0, gGENFSK_MaxRawPacketLength_c length without the SYNC address was 31 bytes. To increase
                 the amount of data by 4 bytes, H0 and H1 fields were used. With RADIO_IS_GEN_3P5,  gGENFSK_MaxRawPacketLength_c
                 length without the SYNC address is 1023 bytes. Gaining 4 additionnal bytes with H0 and H1 is no more relevant.
@@ -2715,9 +2715,9 @@ genfskStatus_t GENFSK_StartRxTx(uint8_t instanceId, uint8_t *pRxBuffer, uint16_t
                     GENFSK->LENGTH_ADJ &= ~(GENFSK_LENGTH_ADJ_LENGTH_ADJ_MASK);
                     GENFSK->LENGTH_ADJ |= GENFSK_LENGTH_ADJ_LENGTH_ADJ(tempLength);
                 }
-#endif /* !defined (RADIO_IS_GEN_3P5) && !defined(RADIO_IS_GEN_4P0) */
+#endif /* (NXP_RADIO_GEN <= 300) */
 
-#if !defined (RADIO_IS_GEN_3P5) && !defined(RADIO_IS_GEN_4P0) && !defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN <= 300)
                 /* Set the packet buffer partition to maximum RX packet. */
                 GENFSK->PB_PARTITION = gGENFSK_PbPartitionMaxRx_c;
 #endif
@@ -2725,7 +2725,7 @@ genfskStatus_t GENFSK_StartRxTx(uint8_t instanceId, uint8_t *pRxBuffer, uint16_t
                 /* Enable RX interrupts. */
                 GENFSK_EnableInterrupts(GENFSK_IRQ_CTRL_RX_IRQ_EN_MASK | GENFSK_IRQ_CTRL_NTW_ADR_IRQ_EN_MASK | GENFSK_IRQ_CTRL_PLL_UNLOCK_IRQ_EN_MASK);
 
-#if defined(RADIO_IS_GEN_3P0) && (RADIO_IS_GEN_3P0 != 0) && defined(RF_OSC_26MHZ) && (RF_OSC_26MHZ != 0)
+#if (NXP_RADIO_GEN >= 350) && defined(RF_OSC_26MHZ) && (RF_OSC_26MHZ != 0)
                 if ( genfskLocal[mGenfskActiveInstance].radioConfig.dataRate == gGenfskDR2Mbps )
                 {
                     /*  When 26MHz RF clock is used with 2mbps data rate, the
@@ -2760,11 +2760,11 @@ genfskStatus_t GENFSK_StartRxTx(uint8_t instanceId, uint8_t *pRxBuffer, uint16_t
                 genfskLocal[instanceId].genfskRxLocal.rxPacketBuffer = pRxBuffer;
                 genfskLocal[instanceId].genfskRxLocal.rxMaxPacketLength = maxBufLengthBytes;
 
-#if defined (RADIO_IS_GEN_3P5)
+#if (NXP_RADIO_GEN >= 350)
                 /* Handle Auto-Ack sequence if required (only available starting fron Gen4 GenLL */
                 if (autoAck)
                 {
-#ifndef RADIO_IS_GEN_3P5
+#if (NXP_RADIO_GEN <= 300)
                     /* Twiddling is done by HW */
                     if (genfskLocal[instanceId].radioConfig.radioMode == gGenfskMsk)
 
@@ -2807,7 +2807,7 @@ genfskStatus_t GENFSK_StartRxTx(uint8_t instanceId, uint8_t *pRxBuffer, uint16_t
                 /* Start RX now. */
                 if (rxStartTime == 0ULL)
                 {
-#if defined (RADIO_IS_GEN_3P5)
+#if (NXP_RADIO_GEN >= 350)
                     if (autoAck)
                     {
                         genfskLocal[instanceId].genfskState = gGENFSK_LL_BusyRxTx;
@@ -2833,7 +2833,7 @@ genfskStatus_t GENFSK_StartRxTx(uint8_t instanceId, uint8_t *pRxBuffer, uint16_t
                 {
                     /* Subtract the RX warmup time from the start time. */
                     uint32_t warmupTime;
-#if !defined (RADIO_IS_GEN_3P5) && !defined(RADIO_IS_GEN_4P0) && !defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN <= 300)
                     warmupTime =  (GENFSK->XCVR_CFG & GENFSK_XCVR_CFG_RX_WARMUP_MASK) >> GENFSK_XCVR_CFG_RX_WARMUP_SHIFT;
 #else
                     warmupTime =  (GENFSK->WARMUP_TIME & GENFSK_WARMUP_TIME_RX_WARMUP_MASK) >> GENFSK_WARMUP_TIME_RX_WARMUP_SHIFT;
@@ -2853,7 +2853,7 @@ genfskStatus_t GENFSK_StartRxTx(uint8_t instanceId, uint8_t *pRxBuffer, uint16_t
                     }
                     else
                     {
-#if defined (RADIO_IS_GEN_3P5)
+#if (NXP_RADIO_GEN >= 350)
                         if (autoAck)
                         {
                             genfskLocal[instanceId].genfskState = gGENFSK_LL_BusyPendingRxTx;
@@ -2863,7 +2863,7 @@ genfskStatus_t GENFSK_StartRxTx(uint8_t instanceId, uint8_t *pRxBuffer, uint16_t
                         {
                             genfskLocal[instanceId].genfskState = gGENFSK_LL_BusyPendingRx;
                         }
-#if !defined(RADIO_IS_GEN_4P0) && !defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN <= 350)
                         GENFSK->T1_CMP = (uint32_t) ((tempTime & GENFSK_T1_CMP_T1_CMP_MASK) | GENFSK_T1_CMP_T1_CMP_EN_MASK);
 #else
                         GENFSK->T1_CMP = (uint32_t) tempTime;
@@ -2916,7 +2916,7 @@ genfskStatus_t GENFSK_CancelPendingRx(void)
         /* Wait for XCVR to become idle. */
         while ((GENFSK->XCVR_CTRL & GENFSK_XCVR_CTRL_XCVR_BUSY_MASK) != 0U) {};
 
-#if defined (RADIO_IS_GEN_3P5)
+#if (NXP_RADIO_GEN >= 350)
         /* Deactivate whitening */
         GENFSK->XCVR_CFG |= (GENFSK_XCVR_CFG_RX_DEWHITEN_DIS_MASK);
 #endif
@@ -2952,7 +2952,7 @@ void GENFSK_AbortAll(void)
         of TX warmup): please refer to below MWS_GENFSK_Callback() function (gMWS_Release_c case).*/
         while ((GENFSK->XCVR_CTRL & GENFSK_XCVR_CTRL_XCVR_BUSY_MASK) != 0U) {};
 
-#if defined (RADIO_IS_GEN_3P5)
+#if (NXP_RADIO_GEN >= 350)
         /* Deactivate whitening */
         GENFSK->XCVR_CFG |= (GENFSK_XCVR_CFG_RX_DEWHITEN_DIS_MASK | GENFSK_XCVR_CFG_TX_WHITEN_DIS_MASK);
 #endif
@@ -3154,7 +3154,7 @@ genfskStatus_t GENFSK_ByteArrayToPacket(uint8_t instanceId, const uint8_t *pBuff
         h0FieldSize = (uint8_t)((genfskLocal[instanceId].genfskRegs.packetCfg & GENFSK_PACKET_CFG_H0_SZ_MASK) >> GENFSK_PACKET_CFG_H0_SZ_SHIFT);
         h1FieldSize = (uint8_t)((genfskLocal[instanceId].genfskRegs.packetCfg & GENFSK_PACKET_CFG_H1_SZ_MASK) >> GENFSK_PACKET_CFG_H1_SZ_SHIFT);
         syncAddrSize = (uint8_t)((genfskLocal[instanceId].genfskRegs.packetCfg & GENFSK_PACKET_CFG_SYNC_ADDR_SZ_MASK) >> GENFSK_PACKET_CFG_SYNC_ADDR_SZ_SHIFT);
-#if !defined (RADIO_IS_GEN_3P5) && !defined(RADIO_IS_GEN_4P0) && !defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN <= 300)
         crcSize = (uint8_t)((genfskLocal[instanceId].genfskRegs.crcCfg & GENFSK_CRC_CFG_CRC_SZ_MASK) >> GENFSK_CRC_CFG_CRC_SZ_SHIFT);
 #else
         crcSize = (uint8_t)((genfskLocal[instanceId].genfskRegs.crcCfg & RBME_CRCW_CFG3_CRC_SZ_MASK) >> RBME_CRCW_CFG3_CRC_SZ_SHIFT);
@@ -3186,7 +3186,7 @@ genfskStatus_t GENFSK_ByteArrayToPacket(uint8_t instanceId, const uint8_t *pBuff
             uint32_t length = 0;
             /* For raw packet the length field in the header is 0. The LENGTH_ADJ register contains
             the length of the payload + crc. */
-#if defined (RADIO_IS_GEN_3P5) || defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN >= 350)
             length = GENFSK->LENGTH_ADJ & GENFSK_LENGTH_ADJ_LENGTH_ADJ_MASK;
 #else
             length = GENFSK->PACKET_CFG & GENFSK_PACKET_CFG_LENGTH_ADJ_MASK;
@@ -3209,7 +3209,7 @@ genfskStatus_t GENFSK_ByteArrayToPacket(uint8_t instanceId, const uint8_t *pBuff
     GENFSK_SetModeConfig()
 */
 
-#if defined (RADIO_IS_GEN_3P5)
+#if (NXP_RADIO_GEN >= 350)
 static uint32_t GENFSK_GtmGetPacketSize(uint8_t instanceId, uint32_t pdu_length, bool_t packet_size_with_aa)
 {
     uint32_t packet_size = 0;
@@ -3227,9 +3227,9 @@ static uint32_t GENFSK_GtmGetPacketSize(uint8_t instanceId, uint32_t pdu_length,
     }
     return packet_size;
 }
-#endif /* RADIO_IS_GEN_3P5 */
+#endif /* (NXP_RADIO_GEN >= 350) */
 
-#if defined (RADIO_IS_GEN_3P5)
+#if (NXP_RADIO_GEN >= 350)
 #define gGENFSK_RxRecycleTimeMargin    50U /* 50 us is required to account for the processing delay in the GENFSK framework
                                               between the time the RX IRQ is issued and the time the RX is handled in the
                                               GENFSK Task ( ie get the number of bytes received and retrieve the data in
@@ -3303,12 +3303,12 @@ GENFSK_STATIC genfskStatus_t GENFSK_GtmGetIpd(uint8_t instanceId, uint32_t pdu_l
     }
     return status;
 }
-#endif /* RADIO_IS_GEN_3P5 */
+#endif /* (NXP_RADIO_GEN >= 350) */
 
 genfskStatus_t GENFSK_GtmStartRx(uint8_t instanceId, const GENFSK_gtm_rx_config_t* rx_gtm_config)
 {
     genfskStatus_t status = gGenfskSuccess_c;
-#if defined (RADIO_IS_GEN_3P5)    
+#if (NXP_RADIO_GEN >= 350)    
     uint32_t sfd2wd_time = 0;
             
     /* Get the PDU length including H0, length, H1, payload and CRC. */
@@ -3360,7 +3360,7 @@ genfskStatus_t GENFSK_GtmStartRx(uint8_t instanceId, const GENFSK_gtm_rx_config_
         and the periodic RX recycling by the GTM state machine should stop. */
     }
     else
-#endif /* RADIO_IS_GEN_3P5 */
+#endif /* (NXP_RADIO_GEN >= 350) */
     {
         status = gGenfskFail_c;
     }
@@ -3371,10 +3371,10 @@ genfskStatus_t GENFSK_GtmStopRx(void)
 {
     genfskStatus_t status = gGenfskSuccess_c;
 
-#if defined (RADIO_IS_GEN_3P5)  
+#if (NXP_RADIO_GEN >= 350)  
     /* Turn off RX */
     GENFSK->GTM_CTRL &= ~GENFSK_GTM_CTRL_GTM_IN_RX_MASK;
-#endif /* RADIO_IS_GEN_3P5 */
+#endif /* (NXP_RADIO_GEN >= 350) */
 
     return status;
 }
@@ -3383,7 +3383,7 @@ genfskStatus_t GENFSK_GtmStartTx(uint8_t instanceId, const GENFSK_gtm_tx_config_
 {
     genfskStatus_t status = gGenfskSuccess_c;
 
-#if defined (RADIO_IS_GEN_3P5) 
+#if (NXP_RADIO_GEN >= 350) 
 #if gGENFSK_CheckParams_c == 1
     if (tx_gtm_config->pdu_type >= genfskGtmPktPayloadMax)
     {
@@ -3455,14 +3455,14 @@ genfskStatus_t GENFSK_GtmStartTx(uint8_t instanceId, const GENFSK_gtm_tx_config_
     }
 #else
     status = gGenfskFail_c;
-#endif /* RADIO_IS_GEN_3P5 */
+#endif /* (NXP_RADIO_GEN >= 350) */
     return status;
 }
 genfskStatus_t GENFSK_GtmStopTx(uint8_t instanceId)
 {
     genfskStatus_t status = gGenfskSuccess_c;
 
-#if defined (RADIO_IS_GEN_3P5)
+#if (NXP_RADIO_GEN >= 350)
     /* Restore */
     genfskLocal[instanceId].genfskRegs.enhFeature &= ~(GENFSK_ENH_FEATURE_LENGTH_ACK_MASK);
     
@@ -3470,7 +3470,7 @@ genfskStatus_t GENFSK_GtmStopTx(uint8_t instanceId)
     GENFSK->GTM_CTRL &= ~GENFSK_GTM_CTRL_GTM_IN_TX_MASK; 
 #else
     status = gGenfskFail_c;
-#endif /* RADIO_IS_GEN_3P5 */
+#endif /* (NXP_RADIO_GEN >= 350) */
     
     return status;
   
@@ -3480,7 +3480,7 @@ genfskStatus_t GENFSK_GtmReadPacketCount(GENFSK_gtm_packet_count_t *pkt_results)
 {
     genfskStatus_t status = gGenfskSuccess_c;
 
-#if defined (RADIO_IS_GEN_3P5)
+#if (NXP_RADIO_GEN >= 350)
     /* Read results from GTM module */
     pkt_results->packet_count = (uint16_t)(GENFSK->GTM_PKT_CNT & GENFSK_GTM_PKT_CNT_GTM_PKT_COUNT_MASK);
     pkt_results->good_packet_count = (uint16_t)(GENFSK->GTM_GOOD_CNT & GENFSK_GTM_GOOD_CNT_GTM_GOOD_PKT_COUNT_MASK);
@@ -3490,7 +3490,7 @@ genfskStatus_t GENFSK_GtmReadPacketCount(GENFSK_gtm_packet_count_t *pkt_results)
     pkt_results->is_activity_enabled = ((GENFSK->GTM_CTRL & (GENFSK_GTM_CTRL_GTM_IN_TX_MASK|GENFSK_GTM_CTRL_GTM_IN_RX_MASK)) > 0U ? TRUE: FALSE); 
 #else
     status = gGenfskFail_c;
-#endif /* RADIO_IS_GEN_3P5 */
+#endif /* (NXP_RADIO_GEN >= 350) */
     
     return status;
 }
@@ -3506,7 +3506,7 @@ GENFSK_STATIC void GENFSK_TaskRxCopyAndPassData(uint16_t byteCount, bool_t crcVa
     rssi = (uint8_t)((GENFSK->XCVR_STS & GENFSK_XCVR_STS_RSSI_MASK) >> GENFSK_XCVR_STS_RSSI_SHIFT);
     tmp = gGenfskTimerOverflow;
     tempTime = tmp | GENFSK->TIMESTAMP;
-#ifndef RADIO_IS_GEN_3P5
+#if (NXP_RADIO_GEN <= 300)
     /* Twiddling is done by the HW */
     if (genfskLocal[mGenfskActiveInstance].radioConfig.radioMode == gGenfskMsk)
     {
@@ -3573,7 +3573,7 @@ static void GENFSK_TaskRx(void)
 
     byteCount = (uint16_t) ((GENFSK->RX_WATERMARK & GENFSK_RX_WATERMARK_BYTE_COUNTER_MASK) >> GENFSK_RX_WATERMARK_BYTE_COUNTER_SHIFT);
 
-#if defined (RADIO_IS_GEN_3P5)
+#if (NXP_RADIO_GEN >= 350)
     /* This version of radio as opposed to other, does not account for AddrSize in byteCount.
      * Add it here for backward compatibility of SW API */
     if ((genfskLocal[mGenfskActiveInstance].genfskRegs.packetCfg & GENFSK_PACKET_CFG_AA_PLAYBACK_CNT_MASK) == 0U)
@@ -3605,7 +3605,7 @@ static void GENFSK_TaskRx(void)
 /* TX event handling. */
 static void GENFSK_TaskTx(void)
 {
-#if defined (RADIO_IS_GEN_3P5)
+#if (NXP_RADIO_GEN >= 350)
     if ((genfskLocal[mGenfskActiveInstance].genfskState != gGENFSK_LL_BusyPendingTxRx) && (genfskLocal[mGenfskActiveInstance].genfskState != gGENFSK_LL_BusyTxRx))
 #endif
     {
@@ -3677,7 +3677,7 @@ static void GENFSK_Task(osaTaskParam_t argument)
         if ((ev & gGenfskRxEventFlag_c) != 0U)
         {
 #if (gGENFSK_MwsControl_c != gGENFSK_NoMwsControl_c)
-#if defined (RADIO_IS_GEN_3P5)
+#if (NXP_RADIO_GEN >= 350)
             /* Make sure access to GENFSK HW module is enabled. */
             RADIO_CTRL->LL_CTRL = 0x00000002U;
 #endif
@@ -3731,7 +3731,7 @@ static void GENFSK_Task(osaTaskParam_t argument)
 static uint32_t MWS_GENFSK_Callback(mwsEvents_t event)
 {
     uint32_t status = gMWS_Success_c;
-#if !defined (RADIO_IS_GEN_3P5) && !defined(RADIO_IS_GEN_4P0) && !defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN <= 300)
     radio_mode_t radioMode;
 #else
     const xcvr_config_t *xcvrConfig = NULL;
@@ -3745,7 +3745,7 @@ static uint32_t MWS_GENFSK_Callback(mwsEvents_t event)
         /* Do nothing */
         break;
     case gMWS_Active_c:
-#if !defined (RADIO_IS_GEN_3P5) && !defined(RADIO_IS_GEN_4P0)
+#if (NXP_RADIO_GEN <= 300)
         GENFSK_GetXcvrConfig(genfskLocal[mGenfskActiveInstance].radioConfig.radioMode, &radioMode);
         (void)XCVR_ChangeMode(radioMode, (data_rate_t)genfskLocal[mGenfskActiveInstance].radioConfig.dataRate);
         /*XCVR_MISC->BLE_ARB_CTRL |= XCVR_CTRL_BLE_ARB_CTRL_BLE_RELINQUISH_MASK;*/
@@ -3771,7 +3771,7 @@ static uint32_t MWS_GENFSK_Callback(mwsEvents_t event)
 
         if (genfskLocal[mGenfskActiveInstance].genfskState != gGENFSK_LL_NoInit)
         {
-#if defined (RADIO_IS_GEN_3P5)
+#if (NXP_RADIO_GEN >= 350)
             RADIO_CTRL->LL_CTRL = 0x2U;
 #endif
             if (genfskLocal[mGenfskActiveInstance].genfskState != gGENFSK_LL_Idle)

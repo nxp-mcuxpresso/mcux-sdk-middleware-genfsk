@@ -16,7 +16,7 @@
 #if defined(KW36Z4_SERIES)
 #define XCVR_DTEST_CTRL (*((uint32_t *)(XCVR_MISC_BASE+0x10u)))
 #define XCVR_CTRL_DTEST_CTRL_DTEST_PAGE_MASK     (0x3Fu)
-#elif defined(RADIO_IS_GEN_3P5)
+#elif (NXP_RADIO_GEN >= 350)
 #define XCVR_DTEST_CTRL (*((uint32_t *)(RADIO_CTRL_BASE+0x10u)))
 #define XCVR_CTRL_DTEST_CTRL_DTEST_PAGE_MASK     (0x7Fu)
 #else
@@ -34,7 +34,7 @@
 #if defined(KW36Z4_SERIES)
 #define DTEST_AA_MACTH_PAGE (0x2A) // aa_sfd_matched in DTEST13 PAGE 0x2A
 #define DTEST_TX_DIG_EN_PAGE (0x0A) // tx_dig_enable in DTEST13
-#elif defined(RADIO_IS_GEN_3P5)
+#elif (NXP_RADIO_GEN >= 350)
 #define DTEST_AA_MACTH_PAGE (0x2F) // dtest_mux_aa_fnd is in DTEST11 PAGE 0x2F (PHY_MUX)
 #define DTEST_MISC_PAGE     (0x54) // lant_sw_active is in DTEST2 ant_tx_out is in DTEST0 PAGE 0x54 (MISC)
 #define DTEST_DMA_PAGE      (0x3)

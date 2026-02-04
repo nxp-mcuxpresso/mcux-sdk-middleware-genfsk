@@ -38,13 +38,13 @@ static inline void GENFSK_IRQTx(osa_event_flags_t *pEventFlags)
 static inline void GENFSK_IRQTx(osaEventFlags_t *pEventFlags)
 #endif /*SDK_COMPONENT_INTEGRATION > 0*/
 {
-#if !defined(RADIO_IS_GEN_4P0) && !defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN <= 350)
     GENFSK->T1_CMP &= ~GENFSK_T1_CMP_T1_CMP_EN_MASK;
 
     *pEventFlags |= gGenfskTxEventFlag_c;
 #else
     GENFSK->XCVR_CFG &= ~GENFSK_XCVR_CFG_T1_CMP_EN_MASK;
-#if defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN >= 450)
     *pEventFlags |= gGenfskTxEventFlag_c;
 #endif
 #endif
@@ -60,7 +60,7 @@ static inline void GENFSK_IRQRx(osa_event_flags_t *pEventFlags)
 static inline void GENFSK_IRQRx(osaEventFlags_t *pEventFlags)
 #endif /*SDK_COMPONENT_INTEGRATION > 0*/
 {
-#if defined(RADIO_IS_GEN_3P0) && (RADIO_IS_GEN_3P0 != 0) && defined(RF_OSC_26MHZ) && (RF_OSC_26MHZ != 0)
+#if (NXP_RADIO_GEN >= 300) && defined(RF_OSC_26MHZ) && (RF_OSC_26MHZ != 0)
     if ( (genfskLocal[mGenfskActiveInstance].radioConfig.dataRate == gGenfskDR2Mbps) &&
         ( ( gGenfskRxRecycleHdrError &&
            (GENFSK->PACKET_CFG & (GENFSK_PACKET_CFG_H0_FAIL_MASK |
@@ -76,7 +76,7 @@ static inline void GENFSK_IRQRx(osaEventFlags_t *pEventFlags)
 #endif
     {
         GENFSK_TimeCancelEvent(&rxTimeoutTimer);
-#if !defined(RADIO_IS_GEN_4P0) && !defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN <= 350)
         GENFSK->T1_CMP &= ~GENFSK_T1_CMP_T1_CMP_EN_MASK;
 #else
         GENFSK->XCVR_CFG &= ~GENFSK_XCVR_CFG_T1_CMP_EN_MASK;
@@ -136,7 +136,7 @@ static inline void GENFSK_IRQPllUnlock(osaEventFlags_t *pEventFlags)
 {
     /* If current state is Rx or RxTx sequence, Abort and send event */
     if ((genfskLocal[mGenfskActiveInstance].genfskState == gGENFSK_LL_BusyPendingRx) || (genfskLocal[mGenfskActiveInstance].genfskState == gGENFSK_LL_BusyRx)
-#if defined (RADIO_IS_GEN_3P5)
+#if (NXP_RADIO_GEN >= 350)
         || (genfskLocal[mGenfskActiveInstance].genfskState == gGENFSK_LL_BusyPendingRxTx) || (genfskLocal[mGenfskActiveInstance].genfskState == gGENFSK_LL_BusyRxTx)
 #endif
             )
@@ -148,7 +148,7 @@ static inline void GENFSK_IRQPllUnlock(osaEventFlags_t *pEventFlags)
 
     /* If current state is Tx or TxRx sequence, Abort and send event */
     if ((genfskLocal[mGenfskActiveInstance].genfskState == gGENFSK_LL_BusyPendingTx) || (genfskLocal[mGenfskActiveInstance].genfskState == gGENFSK_LL_BusyTx)
-#if defined (RADIO_IS_GEN_3P5)
+#if (NXP_RADIO_GEN >= 350)
         || (genfskLocal[mGenfskActiveInstance].genfskState == gGENFSK_LL_BusyPendingTxRx) || (genfskLocal[mGenfskActiveInstance].genfskState == gGENFSK_LL_BusyTxRx)
 #endif
             )
@@ -170,7 +170,7 @@ static inline void GENFSK_IRQWake(osaEventFlags_t *pEventFlags)
 #endif /*SDK_COMPONENT_INTEGRATION > 0*/
 {
     uint32_t timeAdjust = 0;
-#if !defined(RADIO_IS_GEN_4P0) && !defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN <= 350)
     GENFSK->EVENT_TMR = (timeAdjust) | GENFSK_EVENT_TMR_EVENT_TMR_ADD_MASK;
 #else
     GENFSK->EVENT_TMR_ADD = timeAdjust;
@@ -227,7 +227,7 @@ void GENFSK_UnprotectFromXcvrInterrupt(void)
             temp = GENFSK->IRQ_CTRL;
             temp &= ~gGENFSK_AllIrqFlags;
             temp |= GENFSK_IRQ_CTRL_GENERIC_FSK_IRQ_EN_MASK;
-#if !defined (RADIO_IS_GEN_3P5) && !defined(RADIO_IS_GEN_4P0) && !defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN <= 300)
             temp |= GENFSK_IRQ_CTRL_CRC_IGNORE_MASK;
 #endif
             GENFSK->IRQ_CTRL = temp;
@@ -266,12 +266,12 @@ void GENFSK_EnableInterrupts(uint32_t mask)
     irqSts |= (mask);
     GENFSK->IRQ_CTRL = irqSts;
     genfskLocal[mGenfskActiveInstance].genfskRegs.irqCtrl = irqSts;
-#if defined (RADIO_IS_GEN_3P5) && !defined(RADIO_IS_GEN_4P0) && !defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN == 350)
     /* TODO: remove this after radio init sequence rework as XCVR_MISC->XCVR_CTRL is overwritten during radio init*/
     XCVR_MISC->XCVR_CTRL &= (uint32_t)~(uint32_t)(XCVR_CTRL_XCVR_CTRL_RADIO1_IRQ_SEL_MASK);
     XCVR_MISC->XCVR_CTRL |= (uint32_t)(XCVR_CTRL_XCVR_CTRL_RADIO1_IRQ_SEL(GENFSK_LL));
 #endif
-#if defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN >= 450)
     /* Enable timer overflow IRQ */
     GENFSK->IRQ_CTRL2 |= GENFSK_IRQ_CTRL2_EVENT_TIMER_OVER_FLOW_IRQ_EN_MASK;
 #endif
@@ -303,7 +303,7 @@ WEAK void GENFSK_InterruptStatusHook(volatile uint32_t *irqStatus_p) {}
 void GENFSK_InterruptHandler(void)
 {
     uint32_t irqStatus;
-#if defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN >= 450)
     uint32_t irq2Status;
 #endif
 #if (defined(SDK_COMPONENT_INTEGRATION) && (SDK_COMPONENT_INTEGRATION > 0))
@@ -313,7 +313,7 @@ void GENFSK_InterruptHandler(void)
 #endif /*SDK_COMPONENT_INTEGRATION > 0*/
 
 #if (gGENFSK_MwsControl_c != gGENFSK_NoMwsControl_c)
-#if defined (RADIO_IS_GEN_3P5)
+#if (NXP_RADIO_GEN >= 350)
     /* Update LL_CTRL to allow access to Genfsk register. */
     RADIO_CTRL->LL_CTRL = 0x00000002U;
 #endif
@@ -327,7 +327,7 @@ void GENFSK_InterruptHandler(void)
         /* Clear all GENFSK interrupts. */
         GENFSK->IRQ_CTRL = irqStatus;
 
-#if defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN >= 450)
         irq2Status = GENFSK->IRQ_CTRL2;
         GENFSK->IRQ_CTRL2 = irq2Status;
 #endif
@@ -392,7 +392,7 @@ void GENFSK_InterruptHandler(void)
         {
         }
 
-#if defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN >= 450)
         if( (irq2Status & GENFSK_IRQ_CTRL2_EVENT_TIMER_OVER_FLOW_IRQ_MASK) != 0U)
         {
             GENFSK_EventTimerOverflowISR();
@@ -423,7 +423,7 @@ void GENFSK_InstallInterrupt(void)
         XCVR_MISC->XCVR_CTRL &= (uint32_t)~(uint32_t)(XCVR_CTRL_XCVR_CTRL_RADIO0_IRQ_SEL_MASK);
         XCVR_MISC->XCVR_CTRL |= (uint32_t)(XCVR_CTRL_XCVR_CTRL_RADIO0_IRQ_SEL(GENFSK_LL));
     }
-#elif (defined(K32W232H_SERIES) || defined(K32W1480_SERIES) || (defined(NXP_RADIO_GEN) && (NXP_RADIO_GEN >= 450)))
+#elif (NXP_RADIO_GEN >= 450)
     {
         /* TBD */
 #if 0

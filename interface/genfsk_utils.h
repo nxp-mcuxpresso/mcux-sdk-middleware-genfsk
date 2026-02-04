@@ -22,14 +22,10 @@ SPDX-License-Identifier: BSD-3-Clause
  ******************************************************************************/
 
 /*! @brief GENFSK Packet Buffer base address. */
-#if (defined(CPU_MKW21Z256VHT4) || defined(CPU_MKW21Z512VHT4) || defined(CPU_MKW31Z256CAx4) || \
-     defined(CPU_MKW31Z256VHT4) || defined(CPU_MKW31Z512CAx4) || defined(CPU_MKW31Z512VHT4) || \
-     defined(CPU_MKW41Z256VHT4) || defined(CPU_MKW41Z512VHT4) || \
-     defined(CPU_MKW35A512VFP4) || defined(CPU_MKW35Z512VHT4) || defined(CPU_MKW36A512VFP4) || \
-     defined(CPU_MKW36A512VHT4) || defined(CPU_MKW36Z512VFP4) || defined(CPU_MKW36Z512VHT4))
-#define PACKET_BUFFER_BASE_ADDR            (0x4005F700U)
-#elif (defined(CPU_K32W042S1M2VPJ_cm0plus))
+#if defined(CPU_K32W042S1M2VPJ_cm0plus)
 #define PACKET_BUFFER_BASE_ADDR            (0x41033700U)
+#elif (NXP_RADIO_GEN <= 350)
+#define PACKET_BUFFER_BASE_ADDR            (0x4005F700U)
 #endif
 
 #ifndef RX_PACKET_RAM_BASE
@@ -126,7 +122,7 @@ void GENFSK_SaveXcvrDcocDacTrimToFlash(xcvr_DcocDacTrim_t *xcvrDacTrim);
 bool_t GENFSK_RestoreXcvrDcocDacTrimFromFlash(xcvr_DcocDacTrim_t *xcvrDacTrim);
 #endif
 
-#ifndef RADIO_IS_GEN_3P5
+#if (NXP_RADIO_GEN <= 300)
 extern void GENFSK_MskPreProcessing(uint8_t * pByteIn, uint8_t * pByteOut, uint8_t length, uint8_t initBit);
 extern void GENFSK_MskPostProcessing(uint8_t * pByteIn, uint8_t * pByteOut, uint16_t length, uint8_t initBit, uint8_t lsbToMsb);
 #endif
@@ -159,7 +155,7 @@ extern void GENFSK_UnprotectFromXcvrInterrupt(void);
 /*! @brief GENFSK time interrupt service routine. */ 
 void GENFSK_TimeISR(void);
 
-#if defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN >= 450)
 /*! @brief GENFSK timer overflow interrupt service routine. */
 void GENFSK_EventTimerOverflowISR(void);
 #endif
@@ -170,7 +166,7 @@ extern volatile uint64_t gGenfskTimerOverflow;
 
 /*! @} */
 
-#if !defined (RADIO_IS_GEN_3P5) && !(defined(RADIO_IS_GEN_4P0)) && !defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN <= 300)
 genfskStatus_t GENFSK_GetXcvrConfig(genfskRadioMode_t radioModeIn, radio_mode_t *radioMode);
 #else
 genfskStatus_t GENFSK_GetXcvrConfig(genfskRadioMode_t radioModeIn, genfskDataRate_t dataRate, const xcvr_config_t **xcvrConfig);

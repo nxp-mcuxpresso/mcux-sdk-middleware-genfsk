@@ -12,15 +12,22 @@ SPDX-License-Identifier: BSD-3-Clause
 #include "genfsk_sw_version.h"
 #include "EmbeddedTypes.h"
 #include "fsl_device_registers.h"
-#if defined(KW37Z4_SERIES) || defined(KW37A4_SERIES) || defined(KW38Z4_SERIES) || \
-    defined(KW38A4_SERIES) || defined(K32W232H_SERIES) || defined(K32W1480_SERIES) || \
-    (defined(NXP_RADIO_GEN) && (NXP_RADIO_GEN >= 450))
+#if (NXP_RADIO_GEN >= 350)
 #include "nxp2p4_xcvr.h"
 #else
 #include "fsl_xcvr.h"
 #endif
 #include "FunctionLib.h"
 
+#ifdef RADIO_IS_GEN_2P0
+/* KW41 */
+#define NXP_RADIO_GEN     200
+#endif
+
+#ifndef NXP_RADIO_GEN
+/* NXP_RADIO_GEN must be defined */
+#error NXP_RADIO_GEN undefined
+#endif
 
 /*!
  * @addtogroup genfsk
@@ -34,16 +41,16 @@ SPDX-License-Identifier: BSD-3-Clause
  ******************************************************************************/
 #ifdef RADIO_IS_GEN_3P5
 /* GEN_3P5 also supports GEN_3P0 features */
-#define RADIO_IS_GEN_3P0 1
+#define RADIO_IS_GEN_3P0 1  /* Define deprecated. Use NXP_RADIO_GEN instead */
 #endif
 
 #if defined(K32W232H_SERIES) || defined(K32W1480_SERIES) || (defined(NXP_RADIO_GEN) && (NXP_RADIO_GEN >= 450))
 #define RADIO_IS_GEN_3P5
-#define RADIO_IS_GEN_3P0 1
+#define RADIO_IS_GEN_3P0 1  /* Define deprecated. Use NXP_RADIO_GEN instead */
 #endif
 
 #ifdef RADIO_IS_GEN_4P7
-#define RADIO_IS_GEN_4P5
+#define RADIO_IS_GEN_4P5 /* Define deprecated. Use NXP_RADIO_GEN instead */
 #endif
 
 #ifndef gGenfskPreserveXcvrDacTrimValue_d
@@ -78,15 +85,9 @@ SPDX-License-Identifier: BSD-3-Clause
 #ifndef gGENFSK_IrqNo_d
 #if (defined(CPU_K32W042S1M2VPJ_cm0plus))
 #define gGENFSK_IrqNo_d        (RF0_1_IRQn)
-#elif defined(K32W232H_SERIES) || defined(K32W1480_SERIES) || (defined(NXP_RADIO_GEN) && (NXP_RADIO_GEN >= 450))
+#elif (NXP_RADIO_GEN >= 450)
 #define gGENFSK_IrqNo_d (RF_Generic_IRQn)
-#elif (defined(CPU_MKW21Z256VHT4) || defined(CPU_MKW21Z512VHT4) || defined(CPU_MKW31Z256CAx4) || \
-     defined(CPU_MKW31Z256VHT4) || defined(CPU_MKW31Z512CAx4) || defined(CPU_MKW31Z512VHT4) || \
-     defined(CPU_MKW41Z256VHT4) || defined(CPU_MKW41Z512VHT4) || \
-     defined(CPU_MKW35A512VFP4) || defined(CPU_MKW35Z512VHT4) || defined(CPU_MKW36A512VFP4) || \
-     defined(CPU_MKW36A512VHT4) || defined(CPU_MKW36Z512VFP4) || defined(CPU_MKW36Z512VHT4) || \
-     defined(KW37Z4_SERIES)     || defined(KW37A4_SERIES)     || \
-     defined(KW38Z4_SERIES)     || defined(KW38A4_SERIES))
+#else
 #define gGENFSK_IrqNo_d        (Radio_1_IRQn)
 #endif
 #endif
@@ -161,9 +162,9 @@ typedef enum _genfskDataRate
     gGenfskDR1Mbps = 0U,    /*!< GENFSK 1 MBit datarate */
     gGenfskDR500Kbps = 1U,  /*!< GENFSK 500 KBit datarate */
     gGenfskDR250Kbps = 2U,  /*!< GENFSK 250 KBit datarate */
-#if defined (RADIO_IS_GEN_3P0) || defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN >= 300)
     gGenfskDR2Mbps = 3U,     /*!< GENFSK 2 MBit datarate */
-#endif /* RADIO_IS_GEN_3P0 */
+#endif /* (NXP_RADIO_GEN >= 300) */
     gGenfskDRInvalid = 4U   /*!< Invalid */
 } genfskDataRate_t;
 
@@ -177,12 +178,12 @@ typedef enum _genfskRadioMode
     gGenfskGfskBt0p5h0p32 = 1U,  /*!< BT=0.5, h=0.32*/
     gGenfskGfskBt0p5h0p7  = 2U,  /*!< BT=0.5, h=0.7 [CS1 at 500KBPS data rate] */
     gGenfskGfskBt0p5h1p0  = 3U,  /*!< BT=0.5, h=1.0 [CS4 at 250KBPS data rate] */
-#ifndef RADIO_IS_GEN_3P5
+#if (NXP_RADIO_GEN <= 300)
     /* BT=** h=0.5 */
     gGenfskGfskBt0p3h0p5 = 4U,  /*!< BT=0.3, h=0.5 [CS2 at 1MBPS data rate] */
     gGenfskGfskBt0p7h0p5 = 5U,  /*!< BT=0.7, h=0.5 */
     gGenfskFsk       = 6U,  /*!< FSK */
-#endif /* RADIO_IS_GEN_3P5 */
+#endif /* (NXP_RADIO_GEN <= 300) */
     gGenfskMsk       = 7U,  /*!< MSK */
     gGenfskRadioModeInvalid = 8U  /*!< Invalid */
 } genfskRadioMode_t;
@@ -436,7 +437,7 @@ typedef struct _GENFSK_packet_config
     uint16_t h0Mask;  /*!< Mask to select which bits of H0 must match the h0_match field. */
     uint16_t h1Match;  /*!< Bits which must match the H1 portion of a received packet for valid packet reception. */
     uint16_t h1Mask;  /*!< Mask to select which bits of H1 must match the h1_match field. */
-#if defined (RADIO_IS_GEN_3P5)
+#if (NXP_RADIO_GEN >= 350)
     uint8_t  preambleBytePattern; /*if value is not 0, the preamble pattern will be repeated preambleSizeBytes+1*/
 #endif
 } GENFSK_packet_config_t;
@@ -1050,7 +1051,7 @@ genfskStatus_t GENFSK_SetBleWhitenInit(uint8_t instanceId, uint8_t channelNum);
  */
 uint32_t GENFSK_GetSavedXtalTrim(void);
 
-#if defined (RADIO_IS_GEN_3P5) || defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN >= 350)
 /*!
  * @brief Sets the radio and RBME configurations for the current GENFSK LL instance.
  *

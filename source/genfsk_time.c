@@ -35,7 +35,7 @@ SPDX-License-Identifier: BSD-3-Clause
  */ 
 GENFSK_STATIC void GENFSK_TimeSetWaitTimeout(GENFSK_timestamp_t *pWaitTimeout); 
 
-#if !defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN <= 400)
 /*! @brief GENFSK Timer T2 overflow callback. */
 static void GENFSK_TimeOverflowCb(void);
 #endif
@@ -70,7 +70,7 @@ GENFSK_STATIC void GENFSK_TimeSetWaitTimeout(GENFSK_timestamp_t *pWaitTimeout)
 {   
     /* Enter critical section. */
     OSA_InterruptDisable();
-#if !defined(RADIO_IS_GEN_4P0) && !defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN <= 350)
     GENFSK->T2_CMP &= ~GENFSK_T2_CMP_T2_CMP_EN_MASK;
     GENFSK->T2_CMP = (uint32_t) (*pWaitTimeout & GENFSK_T2_CMP_T2_CMP_MASK);
     
@@ -148,7 +148,7 @@ GENFSK_STATIC void GENFSK_TimeMaintenance(void)
     }    
 }
 
-#if !defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN <= 400)
 static void GENFSK_TimeOverflowCb(void)
 {
     /* Reprogram next overflow callback. */
@@ -208,7 +208,7 @@ void GENFSK_TimeInit(void)
 
     /* Clear timer structures array */
     FLib_MemSet (mGenfskTimers, 0, sizeof(mGenfskTimers));
-#if !defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN <= 400)
     /* Schedule overflow callback. */
     pNextEvent = &mGenfskTimers[0];
     pNextEvent->callback = GENFSK_TimeOverflowCb;
@@ -229,7 +229,7 @@ GENFSK_timestamp_t GENFSK_TimeGetTimestamp(void)
     timestamp = (uint64_t) temp;
     timestamp |= gGenfskTimerOverflow;
 
-#if !defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN <= 400)
     /* Check for overflow. */
     if (pNextEvent->callback == GENFSK_TimeOverflowCb)
     {
@@ -251,7 +251,7 @@ GENFSK_timestamp_t GENFSK_TimeGetTimestamp(void)
  */
 void GENFSK_TimeDisableWaitTimeout(void)
 {   
-#if !defined(RADIO_IS_GEN_4P0) && !defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN <= 350)
     GENFSK->T2_CMP &= ~GENFSK_T2_CMP_T2_CMP_EN_MASK;
     
     GENFSK_DisableInterrupts(GENFSK_IRQ_CTRL_T2_IRQ_EN_MASK);
@@ -346,7 +346,7 @@ void GENFSK_TimeCancelEvent(genfskTimerId_t *pTimerId)
 /* Interrupt service routine for GENFSK_IRQ_CTRL_T2_IRQ. */
 void GENFSK_TimeISR(void)
 {
-#if !defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN <= 400)
     /* Increment global overflow counter in case event is GENFSK_TimeOverflowCb */
     if ((pNextEvent != NULL) && (pNextEvent->callback == GENFSK_TimeOverflowCb))
     {
@@ -359,7 +359,7 @@ void GENFSK_TimeISR(void)
     GENFSK_TimeMaintenance();
 }
 
-#if defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN >= 450)
 void GENFSK_EventTimerOverflowISR(void)
 {
     /* Increment global overflow counter */

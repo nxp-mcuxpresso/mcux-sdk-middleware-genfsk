@@ -11,11 +11,10 @@ SPDX-License-Identifier: BSD-3-Clause
 #include "genfsk_ll.h"
 #include "genfsk_utils.h"
 
-#include "fwk_platform.h"
 #include "fsl_os_abstraction.h"
 #include "ModuleInfo.h"
 
-#if defined (RADIO_IS_GEN_3P5) || defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN >= 350)
 #include "nxp_xcvr_gfsk_bt_0p5_h_0p5_config.h"
 #include "nxp_xcvr_gfsk_bt_0p5_h_0p32_config.h"
 #include "nxp_xcvr_gfsk_bt_0p5_h_0p7_config.h"
@@ -38,14 +37,6 @@ SPDX-License-Identifier: BSD-3-Clause
 #include "fwk_platform.h"
 #endif
 
-#if defined(RADIO_IS_GEN_4P5)
-#if !defined(MULTICORE_APP) || (MULTICORE_APP!=1)
-#include "platform_genfsk.h"
-#else
-#include "fwk_platform_genfsk.h"
-#endif
-#endif // defined(RADIO_IS_GEN_4P5)
-
 /*******************************************************************************
  * Variables
  ******************************************************************************/
@@ -55,15 +46,15 @@ SPDX-License-Identifier: BSD-3-Clause
 extern uint32_t g_xtal0Freq;
 #endif
 
-#if defined (RADIO_IS_GEN_3P5) && !defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN == 350)
 static          uint8_t  isHighPowerConfigured = 0x0;
 GENFSK_STATIC   uint8_t  getDefaultRegisterConfig = 0x1;
 GENFSK_STATIC   uint8_t  isDcdcClockEnabled = 0;
 GENFSK_STATIC   uint8_t  targetValueVdd1p5 = 0xFF;
 GENFSK_STATIC   uint8_t  bbLdoHfTrimTx = 0;
-#elif defined(RADIO_IS_GEN_4P5)
+#elif (NXP_RADIO_GEN >= 450)
 static          uint8_t  isHighPowerConfigured = 0x0;
-#endif /* RADIO_IS_GEN_3P5 */
+#endif /* (NXP_RADIO_GEN == 350) */
 
 /*!
  * \brief The version string of Generic FSK
@@ -103,7 +94,7 @@ void GENFSK_ReadPacketBuffer(uint16_t addr_offset, uint8_t *buffer, uint16_t len
     uint8_t *pTemp = NULL;
     uint32_t count = 0;
 
-#if defined (RADIO_IS_GEN_3P5)
+#if (NXP_RADIO_GEN >= 350)
     uint32_t addrTemp;
 
     if ((genfskLocal[mGenfskActiveInstance].genfskRegs.packetCfg & (GENFSK_PACKET_CFG_AA_PLAYBACK_CNT_MASK | GENFSK_PACKET_CFG_LL_FETCH_AA_MASK)) == 0U)
@@ -113,7 +104,7 @@ void GENFSK_ReadPacketBuffer(uint16_t addr_offset, uint8_t *buffer, uint16_t len
 
       switch (nwAddMatched)
       {
-#if defined(NXP_RADIO_GEN) && (NXP_RADIO_GEN <= 470)
+#if (NXP_RADIO_GEN <= 470)
         case 0x8U:
           addrTemp = genfskLocal[mGenfskActiveInstance].genfskRegs.ntwAdr3;
           break;
@@ -155,7 +146,7 @@ genfskStatus_t GENFSK_OverrideFrequency(uint32_t frequency)
     }
     else
     {
-#if !defined(NXP_RADIO_GEN) || (NXP_RADIO_GEN < 350)
+#if (NXP_RADIO_GEN <= 300)
         /* read the RF clock frequency */
         uint32_t refOsc = g_xtal0Freq;
         if( refOsc == 0U )
@@ -179,7 +170,7 @@ genfskStatus_t GENFSK_OverrideFrequency(uint32_t frequency)
 
 static void GENFSK_ReceiveBadPacket(bool on)
 {
-#if defined (RADIO_IS_GEN_3P5)
+#if (NXP_RADIO_GEN >= 350)
     volatile uint32_t tmp;
 
     tmp = GENFSK->LENGTH_MAX;
@@ -194,7 +185,7 @@ static void GENFSK_ReceiveBadPacket(bool on)
         tmp &= ~GENFSK_LENGTH_MAX_REC_BAD_PKT_MASK;
         GENFSK->LENGTH_MAX = tmp;
     }
-#endif /* RADIO_IS_GEN_3P5 */
+#endif /* (NXP_RADIO_GEN >= 350) */
     return;
 }
 
@@ -249,7 +240,7 @@ uint16_t GENFSK_Reverse9Bit(uint16_t input)
     return output;
 }
 
-#if !defined (RADIO_IS_GEN_3P5) && !defined(RADIO_IS_GEN_4P0) && !defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN <= 300)
 genfskStatus_t GENFSK_GetXcvrConfig(genfskRadioMode_t radioModeIn, radio_mode_t *radioMode)
 {
     genfskStatus_t status = gGenfskSuccess_c;
@@ -288,7 +279,7 @@ genfskStatus_t GENFSK_GetXcvrConfig(genfskRadioMode_t radioModeIn, radio_mode_t 
     return status;
 }
 
-#else // !defined (RADIO_IS_GEN_3P5)
+#else // (NXP_RADIO_GEN <= 300)
 /* Identify and return XCVR config corresponding to given radio mode and data rate */
 genfskStatus_t GENFSK_GetXcvrConfig(genfskRadioMode_t radioModeIn, genfskDataRate_t dataRate, const xcvr_config_t **xcvrConfig)
 {
@@ -297,9 +288,9 @@ genfskStatus_t GENFSK_GetXcvrConfig(genfskRadioMode_t radioModeIn, genfskDataRat
     switch (radioModeIn)
     {
     case gGenfskGfskBt0p5h0p5:
-#if !defined (RADIO_IS_GEN_3P5) && !defined(RADIO_IS_GEN_4P0) && !defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN <= 300)
     case gGenfskFsk:
-#endif /* RADIO_IS_GEN_3P5 */
+#endif /* (NXP_RADIO_GEN <= 300) */
          switch (dataRate)
          {
          case gGenfskDR1Mbps:
@@ -327,9 +318,9 @@ genfskStatus_t GENFSK_GetXcvrConfig(genfskRadioMode_t radioModeIn, genfskDataRat
          switch (dataRate)
          {
          case gGenfskDR1Mbps:
-#if !defined(RADIO_IS_GEN_3P5) && !defined(RADIO_IS_GEN_4P0) && !defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN <= 300)
          case gGenfskDR2Mbps:
-#endif /* RADIO_IS_GEN_3P5 */
+#endif /* (NXP_RADIO_GEN <= 300) */
              /* 2Mbps specific configuration is alternate data rate under 1Mbps configuration. The selection is made in GENFSK_SelectRateConfig() API
                 through DATARATE_CONFIG_SEL bit in ENH_FEATURE register:
                 bank0 => 1Mbps
@@ -337,14 +328,14 @@ genfskStatus_t GENFSK_GetXcvrConfig(genfskRadioMode_t radioModeIn, genfskDataRat
              */
              *xcvrConfig = &xcvr_gfsk_bt_0p5_h_0p32_1mbps_full_config;
              break;
-#if !defined(RADIO_IS_GEN_3P5) && !defined(RADIO_IS_GEN_4P0) && !defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN <= 300)
          case gGenfskDR500Kbps:
              *xcvrConfig = &xcvr_gfsk_bt_0p5_h_0p32_500kbps_full_config;
              break;
          case gGenfskDR250Kbps:
              *xcvrConfig = &xcvr_gfsk_bt_0p5_h_0p32_250kbps_full_config;
              break;
-#endif /* RADIO_IS_GEN_3P5 */
+#endif /* (NXP_RADIO_GEN <= 300) */
          default:
              status = gGenfskInvalidParameters_c;
              break;
@@ -384,7 +375,7 @@ genfskStatus_t GENFSK_GetXcvrConfig(genfskRadioMode_t radioModeIn, genfskDataRat
     case gGenfskMsk:
          switch (dataRate)
          {
-#if !defined(RADIO_IS_GEN_3P5) && !defined(RADIO_IS_GEN_4P0)
+#if (NXP_RADIO_GEN <= 300)
          case gGenfskDR1Mbps:
          case gGenfskDR2Mbps:
              /* 2Mbps specific configuration is alternate data rate under 1Mbps configuration. The selection is made in GENFSK_SelectRateConfig() API
@@ -394,15 +385,15 @@ genfskStatus_t GENFSK_GetXcvrConfig(genfskRadioMode_t radioModeIn, genfskDataRat
              */
              *xcvrConfig = &xcvr_msk_1mbps_full_config;
              break;
-#endif /* RADIO_IS_GEN_3P5 */
+#endif /* (NXP_RADIO_GEN <= 300) */
          case gGenfskDR500Kbps:
              *xcvrConfig = &xcvr_msk_500kbps_full_config;
              break;
-#ifndef RADIO_IS_GEN_3P5
+#if (NXP_RADIO_GEN <= 300)
          case gGenfskDR250Kbps:
              *xcvrConfig = &xcvr_msk_250kbps_full_config;
              break;
-#endif /* RADIO_IS_GEN_3P5 */
+#endif /* (NXP_RADIO_GEN <= 300) */
          default:
              status = gGenfskInvalidParameters_c;
              break;
@@ -416,9 +407,9 @@ genfskStatus_t GENFSK_GetXcvrConfig(genfskRadioMode_t radioModeIn, genfskDataRat
 
     return status;
 }
-#endif /* !defined (RADIO_IS_GEN_3P5) */
+#endif /* (NXP_RADIO_GEN <= 300) */
 
-#if !defined(RADIO_IS_GEN_3P5) && !defined(RADIO_IS_GEN_4P0)
+#if (NXP_RADIO_GEN <= 300)
 /* Used for MSK radio mode */
 void GENFSK_MskPreProcessing(uint8_t * pByteIn, uint8_t * pByteOut, uint8_t length, uint8_t initBit)
 {
@@ -509,7 +500,7 @@ uint32_t GENFSK_GetTxDuration(uint8_t instanceId, uint16_t nBytes)
     /* Add CRC size */
     if (genfskLocal[instanceId].crcEnable != gGenfskCrcDisable)
     {
-#if !defined (RADIO_IS_GEN_3P5) && !defined(RADIO_IS_GEN_4P0) && !defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN <= 300)
         crcSize = (genfskLocal[instanceId].genfskRegs.crcCfg & GENFSK_CRC_CFG_CRC_SZ_MASK) >> GENFSK_CRC_CFG_CRC_SZ_SHIFT;
 #else
         crcSize = (genfskLocal[instanceId].genfskRegs.crcCfg & RBME_CRCW_CFG3_CRC_SZ_MASK) >> RBME_CRCW_CFG3_CRC_SZ_SHIFT;
@@ -528,11 +519,11 @@ uint32_t GENFSK_GetTxDuration(uint8_t instanceId, uint16_t nBytes)
     case gGenfskDR250Kbps: /*!< GENFSK 250 KBit datarate */
         duration = (uint32_t) nBytes * 8U * 4U;
         break;
-#if RADIO_IS_GEN_3P0
+#if (NXP_RADIO_GEN >= 300)
     case gGenfskDR2Mbps:   /*!< GENFSK 2 MBit datarate */
         duration = (uint32_t) nBytes * 8U / 2U;
         break;
-#endif /* RADIO_IS_GEN_3P0 */
+#endif /* (NXP_RADIO_GEN >= 350) */
     default:
 #if (defined(GCOV_DO_COVERAGE) && (GCOV_DO_COVERAGE == 0))
         assert(0);	       /*!< should not happen */
@@ -550,14 +541,14 @@ uint32_t GENFSK_GetSavedXtalTrim(void)
     uint32_t savedXtalTrim = 0U;
 
 #if !defined(FPGA_TARGET) || (FPGA_TARGET == 0)
-#if defined(RADIO_IS_GEN_4P5) || defined(RADIO_IS_GEN_4P0)
+#if (NXP_RADIO_GEN >= 400)
     savedXtalTrim = (uint32_t)PLATFORM_GetXtal32MhzTrim(FALSE);
-#elif defined (RADIO_IS_GEN_3P5)
+#elif (NXP_RADIO_GEN >= 350)
     savedXtalTrim = (uint32_t)BOARD_GetXtal32MhzTrim(FALSE);
 #else
 #error no longer supported
-#endif /* defined (RADIO_IS_GEN_3P5) */
-#endif
+#endif /* (NXP_RADIO_GEN >= 400) */
+#endif /* !defined(FPGA_TARGET) || (FPGA_TARGET == 0) */
 
     return savedXtalTrim;
 }
@@ -567,7 +558,7 @@ genfskStatus_t GENFSK_SetXtalTrim(uint32_t xtalTrim)
     genfskStatus_t status = gGenfskInvalidParameters_c;
 
     /*If xtal trim parameter is valid set it in the trim register. */
-#if defined (RADIO_IS_GEN_3P5)
+#if (NXP_RADIO_GEN >= 350)
     if (xtalTrim < 0x80U)
 #endif
     {
@@ -612,7 +603,7 @@ bool_t GENFSK_RestoreXcvrDcocDacTrimFromFlash(xcvr_DcocDacTrim_t *xcvrDacTrim)
 }
 #endif /* gGenfskPreserveXcvrDacTrimValue_d */
 
-#if defined (RADIO_IS_GEN_3P5) && !defined(RADIO_IS_GEN_4P0) && !defined(RADIO_IS_GEN_4P5)
+#if (NXP_RADIO_GEN == 350)
 /* API used to configure DCDC and LDOs to achieve high power/low power TX.
 The other API, GENFSK_SetTxPowerLevel() will select the power level.
 Max power (low power config, TxPowerlevel=32): about 3.5 dBm
@@ -700,7 +691,7 @@ uint8_t GENFSK_IsHighPowerConfigured(void)
 {
     return isHighPowerConfigured;
 }
-#elif defined(RADIO_IS_GEN_4P0)
+#elif (NXP_RADIO_GEN == 400)
 genfskStatus_t GENFSK_ConfigurePower(uint8_t isHighPwrReq)
 {
   /* TBD */
@@ -712,7 +703,7 @@ uint8_t GENFSK_IsHighPowerConfigured(void)
 {
     return isHighPowerConfigured;
 }
-#elif defined(RADIO_IS_GEN_4P5)
+#elif (NXP_RADIO_GEN >= 450)
 genfskStatus_t GENFSK_ConfigurePower(uint8_t isHighPwrReq)
 {
   return gGenfskSuccess_c;
