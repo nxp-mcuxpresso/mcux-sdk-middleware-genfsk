@@ -1137,6 +1137,10 @@ genfskStatus_t GENFSK_SetPacketConfig(uint8_t instanceId, const GENFSK_packet_co
 #endif
             GENFSK->H0_CFG = genfskLocal[instanceId].genfskRegs.h0Cfg;
             GENFSK->H1_CFG = genfskLocal[instanceId].genfskRegs.h1Cfg;
+#if (NXP_RADIO_GEN >= 450)
+            /* No CTEInfo detect by configuring the packet to be received in Advertising Channel PDU */
+            GENFSK->RPA_CTRL |= GENFSK_RPA_CTRL_ADV_CHANNEL_EN_MASK;
+#endif
         }
     }
 
