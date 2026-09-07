@@ -48,7 +48,11 @@ SPDX-License-Identifier: BSD-3-Clause
 /*! @brief GENFSK Timer guard time in microseconds. */
 #define gGENFSK_MinSetupTime_c            (20U)
 /*! @brief GENFSK Timer Overflow value. */
+#if (NXP_RADIO_GEN <= 400)
 #define gGENFSK_OverflowTimerUnit_c       (0x1000000UL)
+#else
+#define gGENFSK_OverflowTimerUnit_c       (0x100000000ULL)
+#endif /* (NXP_RADIO_GEN <= 400) */
 
 /*! Type qualifier - does not affect local variables of integral type */
 #ifndef WEAK
